@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://dx6rewylgqbx6"]
+
+[ext_resource type="Shader" uid="uid://l6shtnmwg04g" path="res://assets/ui/liquid_glass/liquid_glass.gdshader" id="1_mqwbe"]
+
+[resource]
+shader = ExtResource("1_mqwbe")
+shader_parameter/rect_size = Vector2(52.72, 54.28)
+shader_parameter/blur_amount = 0.3450000163875
+shader_parameter/corner_power = 20.0000009025
+shader_parameter/edge_falloff = 0.0
