@@ -1,0 +1,10 @@
+{
+	"name": "Apple Bot",
+		"profile_icon_path": "res://template.PNG",
+	"chat_history": [
+		{ "author": "contact", "text": "Hey there! This is a template chat." },
+		{ "author": "player", "text": "Cool, I'll use this as a starting point." },
+		"You can also provide a simple string; defaults to contact",
+		{ "author": "contact", "text": "Swap in your own messages and profile icon." }
+	]
+}
