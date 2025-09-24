@@ -65,6 +65,8 @@ func _load_chat_from_json() -> void:
 		else:
 			push_warning("contact_card: 'profile_icon_path' did not resolve to a Texture2D: %s" % profile_icon_path)
 
+	# Apply parsed data to UI if nodes exist
+	_apply_to_ui()
 	emit_signal("chat_loaded")
 
 func get_contact_display_name() -> String:
@@ -75,3 +77,30 @@ func get_profile_texture() -> Texture2D:
 
 func get_chat_history() -> Array[Dictionary]:
 	return chat_history
+
+func _apply_to_ui() -> void:
+	var icon_path := NodePath("Icon")
+	if has_node(icon_path):
+		var icon_rect := get_node(icon_path) as TextureRect
+		if icon_rect and profile_texture:
+			icon_rect.texture = profile_texture
+
+	var name_path := NodePath("VBoxContainer/Name")
+	if has_node(name_path):
+		var name_label := get_node(name_path) as Label
+		if name_label and contact_name != "":
+			name_label.text = contact_name
+
+	var last_path := NodePath("VBoxContainer/Last_message")
+	if has_node(last_path):
+		var last_label := get_node(last_path) as Label
+		if last_label:
+			var last_text := _get_last_message_text()
+			if last_text != "":
+				last_label.text = last_text
+
+func _get_last_message_text() -> String:
+	if chat_history.is_empty():
+		return ""
+	var last := chat_history[chat_history.size() - 1]
+	return str(last.get("text", ""))

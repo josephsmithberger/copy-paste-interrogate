@@ -6,7 +6,7 @@
 
 ### File Locations
 - Script: `res://scripts/contact_card.gd`
-- Scene: `res://assets/ui/contact_card.tscn`
+- Scene: `res://scenes/contact_card.tscn`
 - Template JSON: `res://scripts/chats/template_chat.json`
 
 ### JSON Schema
@@ -32,9 +32,25 @@ Example (`scripts/chats/template_chat.json`):
 ```
 
 ### Using the Contact Card
-- Instance `assets/ui/contact_card.tscn` in your scene.
+- Instance `scenes/contact_card.tscn` in your scene.
 - In the Inspector, set `chat_json_path` (exported on `contact_card.gd`) to your JSON file path. Defaults to the template.
 - On ready, the script parses the JSON, loads the avatar texture, and normalizes chat entries.
+
+## Chat List Population
+
+- Script: `res://scripts/chatlist_handler.gd`
+- Scene: `res://scenes/main_window.tscn` → node `Chatlist` (a `VBoxContainer`)
+- Behavior: On ready, it auto-instances a `contact_card.tscn` for each `*.json` under `res://scripts/chats/`.
+	- Sets each instance's exported `chat_json_path` to that file.
+	- Inserts them below the `Search_padding2` separator node.
+	- Adds an `HSeparator` between entries for spacing.
+	- Clears previously added entries on refresh.
+	- Sorts alphabetically by filename.
+
+### Adding a New Contact
+- Drop a `*.json` file into `res://scripts/chats/` (use the template as a starting point).
+- Ensure any avatar path in `profile_icon_path` is a valid Godot resource path (e.g., `res://assets/.../icon.png`).
+- Run the scene: entries appear automatically under the search field with separators.
 
 ### Consuming Parsed Data
 - `get_contact_display_name()` → String name.

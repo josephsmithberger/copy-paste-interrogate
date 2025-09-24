@@ -1,7 +1,8 @@
-[gd_scene load_steps=7 format=3 uid="uid://86c4yi82mspk"]
+[gd_scene load_steps=8 format=3 uid="uid://86c4yi82mspk"]
 
 [ext_resource type="Texture2D" uid="uid://bywugjr51bct2" path="res://template.PNG" id="1_dqb14"]
 [ext_resource type="Theme" uid="uid://ylaclft01m8p" path="res://assets/ui/styling.tres" id="1_pp484"]
+[ext_resource type="Script" uid="uid://b27qw68lgcnix" path="res://scripts/chatlist_handler.gd" id="2_l68op"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pp484"]
 content_margin_left = 25.0
@@ -69,19 +70,34 @@ layout_mode = 2
 theme = ExtResource("1_pp484")
 theme_override_styles/panel = SubResource("StyleBoxFlat_pp484")
 
-[node name="Chatlist" type="VBoxContainer" parent="MarginContainer/HSplitContainer/PanelContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/HSplitContainer/PanelContainer"]
 layout_mode = 2
+follow_focus = true
+horizontal_scroll_mode = 0
 
-[node name="HSeparator" type="HSeparator" parent="MarginContainer/HSplitContainer/PanelContainer/Chatlist"]
+[node name="Chatlist" type="VBoxContainer" parent="MarginContainer/HSplitContainer/PanelContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 20
+script = ExtResource("2_l68op")
+
+[node name="Search_padding" type="HSeparator" parent="MarginContainer/HSplitContainer/PanelContainer/ScrollContainer/Chatlist"]
 layout_mode = 2
 theme_override_constants/separation = 20
 theme_override_styles/separator = SubResource("StyleBoxEmpty_lr1yk")
 
-[node name="search" type="LineEdit" parent="MarginContainer/HSplitContainer/PanelContainer/Chatlist"]
+[node name="search" type="LineEdit" parent="MarginContainer/HSplitContainer/PanelContainer/ScrollContainer/Chatlist"]
 custom_minimum_size = Vector2(50, 0)
 layout_mode = 2
 theme = ExtResource("1_pp484")
+theme_override_font_sizes/font_size = 20
 placeholder_text = "🔍  Search"
+
+[node name="Search_padding2" type="HSeparator" parent="MarginContainer/HSplitContainer/PanelContainer/ScrollContainer/Chatlist"]
+layout_mode = 2
+theme_override_constants/separation = 20
+theme_override_styles/separator = SubResource("StyleBoxEmpty_lr1yk")
 
 [node name="ChatView" type="PanelContainer" parent="MarginContainer/HSplitContainer"]
 clip_children = 1
