@@ -1,6 +1,6 @@
 {
 	"name": "Apple Bot",
-		"profile_icon_path": "res://assets/Placeholder/icon.png",
+		"profile_icon_path": "res://assets/profile_icons/placeholder.png",
 	"chat_history": [
 		{ "author": "contact", "text": "Hey there! This is a template chat." },
 		{ "author": "player", "text": "Cool, I'll use this as a starting point." },

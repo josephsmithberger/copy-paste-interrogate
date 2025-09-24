@@ -1,8 +1,10 @@
-[gd_scene load_steps=8 format=3 uid="uid://86c4yi82mspk"]
+[gd_scene load_steps=10 format=3 uid="uid://86c4yi82mspk"]
 
-[ext_resource type="Texture2D" uid="uid://bywugjr51bct2" path="res://template.PNG" id="1_dqb14"]
-[ext_resource type="Theme" uid="uid://ylaclft01m8p" path="res://assets/ui/styling.tres" id="1_pp484"]
-[ext_resource type="Script" uid="uid://b27qw68lgcnix" path="res://scripts/chatlist_handler.gd" id="2_l68op"]
+[ext_resource type="Theme" uid="uid://ylaclft01m8p" path="res://assets/ui/styling.tres" id="1_ax7xg"]
+[ext_resource type="Script" uid="uid://b27qw68lgcnix" path="res://scripts/chatlist_handler.gd" id="2_exmdq"]
+[ext_resource type="Texture2D" uid="uid://cnsgc7xm8g6tv" path="res://assets/profile_icons/placeholder.png" id="3_k1aoa"]
+[ext_resource type="Texture2D" uid="uid://bywugjr51bct2" path="res://template.PNG" id="4_6aa16"]
+[ext_resource type="Texture2D" uid="uid://bayf68ou81f2j" path="res://assets/ui/message_bubble.png" id="5_exmdq"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pp484"]
 content_margin_left = 25.0
@@ -67,7 +69,7 @@ split_offset = 340
 
 [node name="PanelContainer" type="PanelContainer" parent="MarginContainer/HSplitContainer"]
 layout_mode = 2
-theme = ExtResource("1_pp484")
+theme = ExtResource("1_ax7xg")
 theme_override_styles/panel = SubResource("StyleBoxFlat_pp484")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/HSplitContainer/PanelContainer"]
@@ -80,7 +82,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 20
-script = ExtResource("2_l68op")
+script = ExtResource("2_exmdq")
 
 [node name="Search_padding" type="HSeparator" parent="MarginContainer/HSplitContainer/PanelContainer/ScrollContainer/Chatlist"]
 layout_mode = 2
@@ -90,7 +92,7 @@ theme_override_styles/separator = SubResource("StyleBoxEmpty_lr1yk")
 [node name="search" type="LineEdit" parent="MarginContainer/HSplitContainer/PanelContainer/ScrollContainer/Chatlist"]
 custom_minimum_size = Vector2(50, 0)
 layout_mode = 2
-theme = ExtResource("1_pp484")
+theme = ExtResource("1_ax7xg")
 theme_override_font_sizes/font_size = 20
 placeholder_text = "🔍  Search"
 
@@ -102,7 +104,7 @@ theme_override_styles/separator = SubResource("StyleBoxEmpty_lr1yk")
 [node name="ChatView" type="PanelContainer" parent="MarginContainer/HSplitContainer"]
 clip_children = 1
 layout_mode = 2
-theme = ExtResource("1_pp484")
+theme = ExtResource("1_ax7xg")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/HSplitContainer/ChatView"]
 layout_mode = 2
@@ -165,8 +167,33 @@ layout_mode = 2
 mouse_filter = 2
 texture = SubResource("GradientTexture2D_l68op")
 
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HSplitContainer/ChatView"]
+layout_mode = 2
+
+[node name="Profile_icon" type="TextureRect" parent="MarginContainer/HSplitContainer/ChatView/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture = ExtResource("3_k1aoa")
+stretch_mode = 3
+
 [node name="Template" type="Sprite2D" parent="."]
 visible = false
 position = Vector2(531, 369)
 scale = Vector2(0.45, 0.45)
-texture = ExtResource("1_dqb14")
+texture = ExtResource("4_6aa16")
+
+[node name="NinePatchRect" type="NinePatchRect" parent="."]
+layout_mode = 0
+offset_left = -383.5
+offset_top = 137.0
+offset_right = -173.5
+offset_bottom = 317.0
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("5_exmdq")
+patch_margin_left = 110
+patch_margin_top = 100
+patch_margin_right = 100
+patch_margin_bottom = 80
+axis_stretch_horizontal = 2
+axis_stretch_vertical = 2
