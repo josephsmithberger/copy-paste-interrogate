@@ -1,0 +1,39 @@
+[gd_scene load_steps=3 format=3 uid="uid://0fwgneb3lh3h"]
+
+[ext_resource type="Texture2D" uid="uid://bayf68ou81f2j" path="res://assets/ui/message_bubble.png" id="1_oevmw"]
+[ext_resource type="Theme" uid="uid://ylaclft01m8p" path="res://assets/ui/styling.tres" id="3_r6wk0"]
+
+[node name="message_bubble" type="MarginContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 8
+
+[node name="bubble" type="NinePatchRect" parent="."]
+layout_mode = 2
+texture = ExtResource("1_oevmw")
+patch_margin_left = 110
+patch_margin_top = 100
+patch_margin_right = 100
+patch_margin_bottom = 80
+axis_stretch_horizontal = 2
+axis_stretch_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 50
+theme_override_constants/margin_top = 50
+theme_override_constants/margin_right = 50
+theme_override_constants/margin_bottom = 50
+
+[node name="message" type="Label" parent="MarginContainer"]
+custom_minimum_size = Vector2(1, 1)
+layout_mode = 2
+size_flags_vertical = 1
+theme = ExtResource("3_r6wk0")
+theme_override_font_sizes/font_size = 50
+text = "Hello, this is a test."
+horizontal_alignment = 2
+vertical_alignment = 1
