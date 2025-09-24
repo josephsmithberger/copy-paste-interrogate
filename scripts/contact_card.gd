@@ -11,6 +11,7 @@ signal chat_loaded
 
 func _ready() -> void:
 	_load_chat_from_json()
+	_apply_to_ui()
 
 func _load_chat_from_json() -> void:
 	if chat_json_path.is_empty():
@@ -69,6 +70,25 @@ func _load_chat_from_json() -> void:
 	_apply_to_ui()
 	emit_signal("chat_loaded")
 
+func _apply_to_ui() -> void:
+	var name_label := get_node_or_null("VBoxContainer/Name")
+	if name_label and name_label is Label:
+		name_label.text = contact_name if contact_name != "" else "Unnamed"
+
+	var last_label := get_node_or_null("VBoxContainer/Last_message")
+	if last_label and last_label is Label:
+		var preview := ""
+		if chat_history.size() > 0:
+			var last := chat_history[chat_history.size()-1]
+			if typeof(last) == TYPE_DICTIONARY:
+				preview = str(last.get("text", ""))
+		last_label.text = preview
+
+	var icon_rect := get_node_or_null("Icon")
+	if icon_rect and icon_rect is TextureRect:
+		if profile_texture:
+			icon_rect.texture = profile_texture
+
 func get_contact_display_name() -> String:
 	return contact_name
 
@@ -77,30 +97,3 @@ func get_profile_texture() -> Texture2D:
 
 func get_chat_history() -> Array[Dictionary]:
 	return chat_history
-
-func _apply_to_ui() -> void:
-	var icon_path := NodePath("Icon")
-	if has_node(icon_path):
-		var icon_rect := get_node(icon_path) as TextureRect
-		if icon_rect and profile_texture:
-			icon_rect.texture = profile_texture
-
-	var name_path := NodePath("VBoxContainer/Name")
-	if has_node(name_path):
-		var name_label := get_node(name_path) as Label
-		if name_label and contact_name != "":
-			name_label.text = contact_name
-
-	var last_path := NodePath("VBoxContainer/Last_message")
-	if has_node(last_path):
-		var last_label := get_node(last_path) as Label
-		if last_label:
-			var last_text := _get_last_message_text()
-			if last_text != "":
-				last_label.text = last_text
-
-func _get_last_message_text() -> String:
-	if chat_history.is_empty():
-		return ""
-	var last := chat_history[chat_history.size() - 1]
-	return str(last.get("text", ""))
