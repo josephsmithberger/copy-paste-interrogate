@@ -5,7 +5,8 @@
 - Purpose: Modular contact cards (iMessage-style) that load their data from JSON files for name, profile icon, and chat history.
 
 ### File Locations
-- Script: `res://scripts/contact_card.gd`
+- Base class: `res://scripts/chat_json_view.gd`
+- Contact card script: `res://scripts/contact_card.gd`
 - Scene: `res://scenes/contact_card.tscn`
 - Template JSON: `res://scripts/chats/template_chat.json`
 
@@ -53,10 +54,17 @@ Example (`scripts/chats/template_chat.json`):
 - Run the scene: entries appear automatically under the search field with separators.
 
 ### Consuming Parsed Data
-- `get_contact_display_name()` → String name.
-- `get_profile_texture()` → `Texture2D` for avatar (may be null if path invalid).
-- `get_chat_history()` → Array of `{ author, text }` dictionaries.
-- Signal `chat_loaded` is emitted after parsing completes; connect this to update UI widgets.
+- Provided by `chat_json_view.gd` and available to subclasses:
+	- `get_contact_display_name()` → String name.
+	- `get_profile_texture()` → `Texture2D` for avatar (may be null if path invalid).
+	- `get_chat_history()` → Array of `{ author, text }` dictionaries.
+	- `get_last_message_text()` → String last message or empty.
+	- Signals: `chat_loaded`, `chat_failed(error)`.
+
+### Reuse in Other UI (e.g., Message Chain)
+- Create a new script that extends the base by path: `extends "res://scripts/chat_json_view.gd"`.
+- Override `_apply_to_ui()` to bind `contact_name`, `profile_texture`, and `chat_history` into your specific node tree (e.g., generate message bubbles).
+- Optionally call `reload_with_path(path)` at runtime to switch conversations.
 
 ### Notes
 - Paths must be Godot resource paths (e.g. `res://...`).
