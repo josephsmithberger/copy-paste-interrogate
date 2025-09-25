@@ -100,10 +100,36 @@ func _rebuild_message_bubbles() -> void:
 		if scene == null:
 			continue
 		var bubble := scene.instantiate()
-		var label := bubble.get_node_or_null("MarginContainer/message")
-		if label is Label:
-			label.text = text
-		_messages_root.add_child(bubble)
+
+		# Create a horizontal row container to control alignment & eliminate opposite-side negative space
+		var row := HBoxContainer.new()
+		row.size_flags_horizontal = Control.SIZE_FILL  # Row spans width; bubble won't
+		_messages_root.add_child(row)
+
+		# Spacer logic: left-aligned (NPC) -> spacer AFTER bubble; right-aligned (player) -> spacer BEFORE bubble
+		var spacer := Control.new()
+		spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+		if author == "player":
+			# Right aligned: push bubble to the right by putting expandable spacer first
+			row.add_child(spacer)
+			row.add_child(bubble)
+		else:
+			# Left aligned: bubble first, spacer after
+			row.add_child(bubble)
+			row.add_child(spacer)
+
+		# Ensure bubble itself does NOT expand horizontally so it shrinks to its content
+		if bubble is Control:
+			bubble.size_flags_horizontal = 0
+
+		# Populate text using helper if available
+		if bubble.has_method("set_message_text"):
+			bubble.set_message_text(text)
+		else:
+			var label := bubble.get_node_or_null("MarginContainer/message")
+			if label is RichTextLabel:
+				label.text = text
 
 func _defer_scroll_to_bottom() -> void:
 	# Ensure layout updated before scrolling
