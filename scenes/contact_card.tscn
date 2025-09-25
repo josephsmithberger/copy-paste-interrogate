@@ -6,6 +6,10 @@
 [ext_resource type="FontFile" uid="uid://boaluht6layu6" path="res://assets/ui/liquid_glass/Inter-VariableFont_opsz,wght.ttf" id="4_uhrrb"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ansig"]
+content_margin_left = 5.0
+content_margin_top = 5.0
+content_margin_right = 5.0
+content_margin_bottom = 5.0
 
 [sub_resource type="FontVariation" id="FontVariation_3md04"]
 base_font = ExtResource("4_uhrrb")

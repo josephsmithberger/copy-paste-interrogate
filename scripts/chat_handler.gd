@@ -105,6 +105,8 @@ func _rebuild_message_bubbles() -> void:
 	top_sep.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# Provide 50px vertical space at the top for scroll offset purposes
 	top_sep.custom_minimum_size = Vector2(0, 100)
+	# Make the separator invisible by using an empty style box
+	top_sep.add_theme_stylebox_override("separator", StyleBoxEmpty.new())
 	_messages_root.add_child(top_sep)
 
 	for entry in chat_history:
@@ -146,6 +148,16 @@ func _rebuild_message_bubbles() -> void:
 			var label := bubble.get_node_or_null("MarginContainer/message")
 			if label is RichTextLabel:
 				label.text = text
+
+	# Add a bottom separator so there's always scrollable space below the last message
+	var bottom_sep := HSeparator.new()
+	bottom_sep.name = "BottomSeparator"
+	bottom_sep.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Provide 50px vertical space at the bottom for scroll offset purposes
+	bottom_sep.custom_minimum_size = Vector2(0, 100)
+	# Make the separator invisible by using an empty style box
+	bottom_sep.add_theme_stylebox_override("separator", StyleBoxEmpty.new())
+	_messages_root.add_child(bottom_sep)
 
 func _defer_scroll_to_bottom() -> void:
 	# Ensure layout updated before scrolling

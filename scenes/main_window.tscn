@@ -1,8 +1,10 @@
-[gd_scene load_steps=8 format=3 uid="uid://86c4yi82mspk"]
+[gd_scene load_steps=11 format=3 uid="uid://86c4yi82mspk"]
 
 [ext_resource type="Theme" uid="uid://ylaclft01m8p" path="res://assets/ui/styling.tres" id="1_ax7xg"]
 [ext_resource type="Script" uid="uid://b27qw68lgcnix" path="res://scripts/contact_handler.gd" id="2_exmdq"]
 [ext_resource type="Script" uid="uid://cgefaxr1kiuco" path="res://scripts/chat_handler.gd" id="3_ax7xg"]
+[ext_resource type="Shader" uid="uid://dxvbib4fc8jai" path="res://assets/ui/window_falloff_blur.gdshader" id="4_ax7xg"]
+[ext_resource type="Texture2D" uid="uid://drxt0u0y3y1t5" path="res://assets/ui/symbols/Untitled-1.png" id="5_exmdq"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pp484"]
 content_margin_left = 25.0
@@ -22,16 +24,23 @@ corner_radius_bottom_left = 35
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_lr1yk"]
 
-[sub_resource type="Gradient" id="Gradient_lr1yk"]
-interpolation_mode = 2
-colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 0)
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_exmdq"]
+shader = ExtResource("4_ax7xg")
+shader_parameter/blur_strength = 4.0
+shader_parameter/falloff_size = 0.29999999329439997
+shader_parameter/falloff_offset = 0.0
+shader_parameter/falloff_curve = 1.0
+shader_parameter/gradient_color = Color(0, 0, 0, 1)
+shader_parameter/gradient_strength = 0.5
 
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_l68op"]
-gradient = SubResource("Gradient_lr1yk")
-width = 200
-height = 600
-fill_from = Vector2(0.5, 0)
-fill_to = Vector2(0.5, 0.25)
+[sub_resource type="Gradient" id="Gradient_lp381"]
+offsets = PackedFloat32Array(0.9866667)
+colors = PackedColorArray(0, 0, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_ax7xg"]
+gradient = SubResource("Gradient_lp381")
+width = 90
+height = 90
 
 [node name="Control" type="Control"]
 layout_mode = 3
@@ -116,17 +125,38 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="Fade" type="TextureRect" parent="MarginContainer/HSplitContainer/ChatView"]
+[node name="Fade" type="ColorRect" parent="MarginContainer/HSplitContainer/ChatView"]
+z_index = 1
+material = SubResource("ShaderMaterial_exmdq")
 layout_mode = 2
 mouse_filter = 2
-texture = SubResource("GradientTexture2D_l68op")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HSplitContainer/ChatView"]
+z_index = 1
 layout_mode = 2
 mouse_filter = 2
+theme_override_constants/separation = 430
 
 [node name="Profile_icon" type="TextureRect" parent="MarginContainer/HSplitContainer/ChatView/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
+texture = SubResource("GradientTexture2D_ax7xg")
 stretch_mode = 3
+
+[node name="Message" type="LineEdit" parent="MarginContainer/HSplitContainer/ChatView/VBoxContainer"]
+custom_minimum_size = Vector2(700, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+theme = ExtResource("1_ax7xg")
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_selected_color = Color(0, 0.41423574, 0.79860514, 0.57254905)
+theme_override_colors/font_placeholder_color = Color(0.59607846, 0.59607846, 0.6156863, 1)
+theme_override_colors/clear_button_color = Color(0.5033745, 0.5033746, 0.5033746, 1)
+theme_override_colors/clear_button_color_pressed = Color(0.6319401, 0.6319462, 0.6509897, 1)
+theme_override_font_sizes/font_size = 50
+theme_override_icons/clear = ExtResource("5_exmdq")
+placeholder_text = "iMessage"
+max_length = 50
+virtual_keyboard_show_on_focus = false
+clear_button_enabled = true
