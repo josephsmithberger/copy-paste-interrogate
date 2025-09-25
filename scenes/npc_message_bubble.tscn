@@ -22,10 +22,10 @@ axis_stretch_vertical = 2
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 4
-theme_override_constants/margin_left = 26
-theme_override_constants/margin_top = 22
-theme_override_constants/margin_right = 26
-theme_override_constants/margin_bottom = 22
+theme_override_constants/margin_left = 70
+theme_override_constants/margin_top = 45
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 45
 
 [node name="message" type="RichTextLabel" parent="MarginContainer"]
 layout_mode = 2

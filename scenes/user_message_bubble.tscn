@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://0o0i6bumuvka" path="res://scripts/user_message_bubble.gd" id="4_script"]
 
 [node name="user_message_bubble" type="MarginContainer"]
+layout_direction = 3
 grow_horizontal = 0
 grow_vertical = 2
 script = ExtResource("4_script")
@@ -23,10 +24,10 @@ axis_stretch_vertical = 2
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 4
-theme_override_constants/margin_left = 26
-theme_override_constants/margin_top = 22
-theme_override_constants/margin_right = 26
-theme_override_constants/margin_bottom = 22
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 45
+theme_override_constants/margin_right = 55
+theme_override_constants/margin_bottom = 45
 
 [node name="message" type="RichTextLabel" parent="MarginContainer"]
 layout_mode = 2
