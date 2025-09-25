@@ -1,9 +1,8 @@
-[gd_scene load_steps=10 format=3 uid="uid://86c4yi82mspk"]
+[gd_scene load_steps=9 format=3 uid="uid://86c4yi82mspk"]
 
 [ext_resource type="Theme" uid="uid://ylaclft01m8p" path="res://assets/ui/styling.tres" id="1_ax7xg"]
-[ext_resource type="Script" uid="uid://b27qw68lgcnix" path="res://scripts/chatlist_handler.gd" id="2_exmdq"]
-[ext_resource type="PackedScene" uid="uid://0fwgneb3lh3h" path="res://scenes/user_message_bubble.tscn" id="3_ax7xg"]
-[ext_resource type="PackedScene" uid="uid://duae1fyatlplu" path="res://scenes/npc_message_bubble.tscn" id="3_exmdq"]
+[ext_resource type="Script" uid="uid://b27qw68lgcnix" path="res://scripts/contact_handler.gd" id="2_exmdq"]
+[ext_resource type="Script" uid="uid://cgefaxr1kiuco" path="res://scripts/chat_handler.gd" id="3_ax7xg"]
 [ext_resource type="Texture2D" uid="uid://cnsgc7xm8g6tv" path="res://assets/profile_icons/placeholder.png" id="3_k1aoa"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pp484"]
@@ -105,27 +104,17 @@ theme_override_styles/separator = SubResource("StyleBoxEmpty_lr1yk")
 clip_children = 1
 layout_mode = 2
 theme = ExtResource("1_ax7xg")
+script = ExtResource("3_ax7xg")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/HSplitContainer/ChatView"]
 layout_mode = 2
+horizontal_scroll_mode = 0
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HSplitContainer/ChatView/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 20.0
-
-[node name="npc_message_bubble" parent="MarginContainer/HSplitContainer/ChatView/ScrollContainer/VBoxContainer" instance=ExtResource("3_exmdq")]
-layout_mode = 2
-
-[node name="user_message_bubble" parent="MarginContainer/HSplitContainer/ChatView/ScrollContainer/VBoxContainer" instance=ExtResource("3_ax7xg")]
-layout_mode = 2
-
-[node name="user_message_bubble2" parent="MarginContainer/HSplitContainer/ChatView/ScrollContainer/VBoxContainer" instance=ExtResource("3_ax7xg")]
-layout_mode = 2
-
-[node name="npc_message_bubble2" parent="MarginContainer/HSplitContainer/ChatView/ScrollContainer/VBoxContainer" instance=ExtResource("3_exmdq")]
-layout_mode = 2
 
 [node name="Fade" type="TextureRect" parent="MarginContainer/HSplitContainer/ChatView"]
 layout_mode = 2

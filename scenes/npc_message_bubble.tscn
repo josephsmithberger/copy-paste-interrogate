@@ -27,9 +27,9 @@ axis_stretch_vertical = 2
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 4
-theme_override_constants/margin_left = 80
+theme_override_constants/margin_left = 70
 theme_override_constants/margin_top = 50
-theme_override_constants/margin_right = 50
+theme_override_constants/margin_right = 60
 theme_override_constants/margin_bottom = 50
 
 [node name="message" type="Label" parent="MarginContainer"]

@@ -7,11 +7,11 @@ const CHATS_DIR := "res://scripts/chats"
 @onready var _anchor: Node = $Search_padding2
 
 func _ready() -> void:
-	call_deferred("_populate_chat_list")
+	call_deferred("_populate_contact_list")
 
-func _populate_chat_list() -> void:
+func _populate_contact_list() -> void:
 	if _anchor == null:
-		push_error("chatlist_handler: 'Search_padding2' node not found.")
+		push_error("contact_handler: 'Search_padding2' node not found.")
 		return
 
 	# Clear any previously added items below the anchor
@@ -22,12 +22,12 @@ func _populate_chat_list() -> void:
 
 	var card_scene := load(CONTACT_CARD_SCENE_PATH)
 	if not (card_scene is PackedScene):
-		push_error("chatlist_handler: Failed to load contact card scene: %s" % CONTACT_CARD_SCENE_PATH)
+		push_error("contact_handler: Failed to load contact card scene: %s" % CONTACT_CARD_SCENE_PATH)
 		return
 
 	var files := DirAccess.get_files_at(CHATS_DIR)
 	if files.is_empty():
-		push_warning("chatlist_handler: No files found in %s" % CHATS_DIR)
+		push_warning("contact_handler: No files found in %s" % CHATS_DIR)
 	files.sort() # Stable order
 
 	var insert_after: Node = _anchor
@@ -44,7 +44,7 @@ func _populate_chat_list() -> void:
 		# Set exported json path on the card's script
 		card.chat_json_path = json_path
 
-		print("chatlist_handler: Adding card for", json_path)
+		print("contact_handler: Adding card for", json_path)
 
 		add_child(card)
 		move_child(card, insert_after.get_index() + 1)
@@ -57,6 +57,6 @@ func _populate_chat_list() -> void:
 		added += 1
 
 	if added == 0:
-		push_warning("chatlist_handler: No JSON chats found in %s" % CHATS_DIR)
+		push_warning("contact_handler: No JSON chats found in %s" % CHATS_DIR)
 	else:
-		print("chatlist_handler: Added %d chat(s) from %s" % [added, CHATS_DIR])
+		print("contact_handler: Added %d chat(s) from %s" % [added, CHATS_DIR])

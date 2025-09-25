@@ -1,4 +1,5 @@
-extends "res://scripts/chat_json_view.gd"
+extends ChatJsonView
+signal contact_selected(chat_path:String)
 
 func _apply_to_ui() -> void:
 	var icon_path := NodePath("Icon")
@@ -19,3 +20,8 @@ func _apply_to_ui() -> void:
 		if last_label:
 			var last_text := get_last_message_text()
 			last_label.text = last_text
+
+func _gui_input(event):
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			contact_selected.emit(chat_json_path)

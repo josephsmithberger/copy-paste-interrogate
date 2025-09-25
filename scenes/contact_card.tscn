@@ -12,6 +12,7 @@ variation_embolden = 0.7
 [node name="HBoxContainer" type="HBoxContainer"]
 offset_right = 298.0
 offset_bottom = 72.0
+mouse_filter = 0
 theme_override_constants/separation = 10
 script = ExtResource("1_krk5g")
 
