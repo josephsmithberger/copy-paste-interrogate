@@ -33,6 +33,7 @@ theme_override_constants/margin_bottom = 45
 layout_mode = 2
 focus_mode = 2
 theme = ExtResource("3_r6wk0")
+theme_override_colors/selection_color = Color(0, 0.41423574, 0.79860514, 0.57254905)
 theme_override_font_sizes/normal_font_size = 50
 bbcode_enabled = true
 text = "Hello, this is a test."

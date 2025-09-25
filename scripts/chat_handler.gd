@@ -57,7 +57,8 @@ func _try_connect_card(node: Node) -> void:
 		return
 	if node.is_connected("contact_selected", Callable(self, "_on_contact_selected")):
 		return
-	node.connect("contact_selected", Callable(self, "_on_contact_selected"))
+	# Bind the node so the handler knows which card emitted the signal
+	node.connect("contact_selected", Callable(self, "_on_contact_selected").bind(node))
 
 func _get_contact_list() -> Node:
 	# ChatView (this) path: MarginContainer/HSplitContainer/ChatView
@@ -67,11 +68,18 @@ func _get_contact_list() -> Node:
 		return get_node(path)
 	return null
 
-func _on_contact_selected(chat_path: String) -> void:
+func _on_contact_selected(chat_path: String, card: Node) -> void:
 	# If we have never loaded, force load even if path matches default.
 	if chat_path == chat_json_path and _loaded_once:
 		return
 	reload_with_path(chat_path)
+
+	# Visual selection: mark the card that emitted the signal as selected, others unselected
+	var contact_list := _get_contact_list()
+	if contact_list:
+		for child in contact_list.get_children():
+			if child.has_method("set_selected"):
+				child.set_selected(child == card)
 
 func _apply_to_ui() -> void:
 	# Called after a successful load in reload_with_path().
@@ -90,6 +98,14 @@ func _rebuild_message_bubbles() -> void:
 	# Clear existing bubbles
 	for c in _messages_root.get_children():
 		c.queue_free()
+
+	# Add a top separator so there's always scrollable space above the first message
+	var top_sep := HSeparator.new()
+	top_sep.name = "TopSeparator"
+	top_sep.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Provide 50px vertical space at the top for scroll offset purposes
+	top_sep.custom_minimum_size = Vector2(0, 100)
+	_messages_root.add_child(top_sep)
 
 	for entry in chat_history:
 		var author := str(entry.get("author", "contact"))
@@ -138,9 +154,5 @@ func _defer_scroll_to_bottom() -> void:
 func _scroll_to_bottom() -> void:
 	if _scroll == null:
 		return
-	# ScrollContainer API: obtain v scroll bar value
-	var vs := _scroll.get_v_scroll_bar()
-	if vs:
-		vs.value = vs.max_value
-	else:
-		pass
+	# Use scroll_vertical property directly instead of scrollbar value
+	_scroll.scroll_vertical = int(_scroll.get_v_scroll_bar().max_value)

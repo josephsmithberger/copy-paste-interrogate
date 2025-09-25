@@ -1,9 +1,8 @@
-[gd_scene load_steps=9 format=3 uid="uid://86c4yi82mspk"]
+[gd_scene load_steps=8 format=3 uid="uid://86c4yi82mspk"]
 
 [ext_resource type="Theme" uid="uid://ylaclft01m8p" path="res://assets/ui/styling.tres" id="1_ax7xg"]
 [ext_resource type="Script" uid="uid://b27qw68lgcnix" path="res://scripts/contact_handler.gd" id="2_exmdq"]
 [ext_resource type="Script" uid="uid://cgefaxr1kiuco" path="res://scripts/chat_handler.gd" id="3_ax7xg"]
-[ext_resource type="Texture2D" uid="uid://cnsgc7xm8g6tv" path="res://assets/profile_icons/placeholder.png" id="3_k1aoa"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pp484"]
 content_margin_left = 25.0
@@ -92,6 +91,7 @@ theme_override_styles/separator = SubResource("StyleBoxEmpty_lr1yk")
 custom_minimum_size = Vector2(50, 0)
 layout_mode = 2
 theme = ExtResource("1_ax7xg")
+theme_override_colors/font_selected_color = Color(0.003921569, 0.5254902, 1, 0.57254905)
 theme_override_font_sizes/font_size = 20
 placeholder_text = "🔍  Search"
 
@@ -129,5 +129,4 @@ mouse_filter = 2
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
-texture = ExtResource("3_k1aoa")
 stretch_mode = 3

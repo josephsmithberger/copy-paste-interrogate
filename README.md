@@ -7,7 +7,10 @@
 ### File Locations
 - Base class: `res://scripts/chat_json_view.gd`
 - Contact card script: `res://scripts/contact_card.gd`
-- Scene: `res://scenes/contact_card.tscn`
+- Contact list handler: `res://scripts/contact_handler.gd`
+- Chat view handler: `res://scripts/chat_handler.gd`
+- Contact card scene: `res://scenes/contact_card.tscn`
+- Main window scene: `res://scenes/main_window.tscn`
 - Template JSON: `res://scripts/chats/template_chat.json`
 
 ### JSON Schema
@@ -22,7 +25,7 @@ Example (`scripts/chats/template_chat.json`):
 ```
 {
 	"name": "Apple Bot",
-		"profile_icon_path": "res://template.PNG",
+	"profile_icon_path": "res://template.PNG",
 	"chat_history": [
 		{ "author": "contact", "text": "Hey there! This is a template chat." },
 		{ "author": "player", "text": "Cool, I'll use this as a starting point." },
@@ -36,10 +39,11 @@ Example (`scripts/chats/template_chat.json`):
 - Instance `scenes/contact_card.tscn` in your scene.
 - In the Inspector, set `chat_json_path` (exported on `contact_card.gd`) to your JSON file path. Defaults to the template.
 - On ready, the script parses the JSON, loads the avatar texture, and normalizes chat entries.
+- Clicking a card emits a selection signal used by the chat view to load the conversation and apply a focused style.
 
 ## Chat List Population
 
-- Script: `res://scripts/chatlist_handler.gd`
+- Script: `res://scripts/contact_handler.gd`
 - Scene: `res://scenes/main_window.tscn` → node `Chatlist` (a `VBoxContainer`)
 - Behavior: On ready, it auto-instances a `contact_card.tscn` for each `*.json` under `res://scripts/chats/`.
 	- Sets each instance's exported `chat_json_path` to that file.
@@ -47,6 +51,7 @@ Example (`scripts/chats/template_chat.json`):
 	- Adds an `HSeparator` between entries for spacing.
 	- Clears previously added entries on refresh.
 	- Sorts alphabetically by filename.
+	- Filters by search text (case-insensitive) against the contact display name.
 
 ### Adding a New Contact
 - Drop a `*.json` file into `res://scripts/chats/` (use the template as a starting point).
@@ -70,3 +75,113 @@ Example (`scripts/chats/template_chat.json`):
 - Paths must be Godot resource paths (e.g. `res://...`).
 - If `profile_icon_path` is invalid or not a texture, a warning is logged and avatar will be null.
 - Non-array `chat_history` or non-dictionary root will log errors and safely fallback.
+
+---
+
+## Runtime Architecture and APIs
+
+This section documents the public-facing APIs (exports, signals, and methods) and the expected scene wiring.
+
+### Base class: `ChatJsonView` (res://scripts/chat_json_view.gd)
+- Extends: `Control`
+- Exported properties:
+	- `@export_file("*.json") var chat_json_path: String` — JSON source path. Defaults to the template.
+- Signals:
+	- `chat_loaded`
+	- `chat_failed(error: String)`
+- Properties (populated after load):
+	- `contact_name: String`
+	- `profile_icon_path: String`
+	- `profile_texture: Texture2D` (nullable)
+	- `chat_history: Array[Dictionary]` with `{ author: String, text: String }`
+- Methods:
+	- `load_chat_from_json()` — Loads, parses, and emits `chat_loaded` or `chat_failed`.
+	- `reload_with_path(new_path: String)` — Sets `chat_json_path` then calls `load_chat_from_json()`.
+	- `get_contact_display_name() -> String`
+	- `get_profile_texture() -> Texture2D`
+	- `get_chat_history() -> Array[Dictionary]`
+	- `get_last_message_text() -> String`
+	- `_apply_to_ui()` — Intentionally empty; subclasses override to bind parsed data to their UI.
+
+Scene/node contracts expected by subclasses are documented below.
+
+### Contact card: `contact_card.gd` (res://scripts/contact_card.gd)
+- Extends: `ChatJsonView`
+- Scene: `res://scenes/contact_card.tscn`
+- Signals:
+	- `contact_selected(chat_path: String)` — Emitted on left click; `chat_path` equals `chat_json_path`.
+- Methods:
+	- `set_selected(selected: bool)` — Visually marks the card as focused (selected) or default (unselected).
+- Selection/focus styling:
+	- Selected: applies `res://assets/ui/contact_card_focus.tres` as the panel style.
+	- Unselected: restores the default panel style (empty) as set in the editor.
+- Input behavior:
+	- The root node is a `PanelContainer`. It stops mouse input so `_gui_input` receives clicks.
+	- Common child controls are set to pass mouse input so they don’t swallow the click.
+	- On left mouse button press, emits `contact_selected(chat_json_path)`.
+- Node paths used by `_apply_to_ui()`:
+	- Avatar: `HBoxContainer/Icon` (`TextureRect`)
+	- Name: `HBoxContainer/VBoxContainer/Name` (`Label`)
+	- Last message: `HBoxContainer/VBoxContainer/Last_message` (`Label`)
+
+### Contact list handler: `contact_handler.gd` (res://scripts/contact_handler.gd)
+- Extends: `VBoxContainer`
+- Responsibilities:
+	- Populate the contact list under the `Chatlist` node from JSON files in `res://scripts/chats`.
+	- Insert an `HSeparator` between entries.
+	- Provide search filtering via the `LineEdit` named `search`.
+- Key constants:
+	- `CONTACT_CARD_SCENE_PATH := "res://scenes/contact_card.tscn"`
+	- `CHATS_DIR := "res://scripts/chats"`
+- Important nodes (onready):
+	- `_anchor: Node = $Search_padding2` — Items are inserted after this separator.
+	- `_search: LineEdit = $search` — Search box; filters by contact display name.
+- Behavior:
+	- On ready, defers `_populate_contact_list()` to allow the scene tree to settle.
+	- For each `*.json` file, instances a card and sets `card.chat_json_path` to that file.
+	- Keeps the list stable and clears old instances on refresh.
+	- `_filter_contacts()` shows/hides cards and their immediate separators based on the query.
+
+### Chat view handler: `chat_handler.gd` (res://scripts/chat_handler.gd)
+- Extends: `ChatJsonView` — The chat view itself binds to parsed data after a selection is made.
+- Responsibilities:
+	- Connect to `contact_selected` from contact cards in the `Chatlist` and call `reload_with_path(chat_path)`.
+	- Apply the avatar to its own `Profile_icon`.
+	- Build message bubbles under its own messages container.
+	- Manage scrolling to the bottom after layout updates.
+	- Toggle visual selection on cards (calls each card’s `set_selected`) so only the clicked card is focused.
+- Scenes used for message bubbles:
+	- NPC/Contact: `res://scenes/npc_message_bubble.tscn`
+	- Player: `res://scenes/user_message_bubble.tscn`
+- Node paths expected in `main_window.tscn` under the ChatView:
+	- Avatar: `$VBoxContainer/Profile_icon` (`TextureRect`)
+	- Scroll container: `$ScrollContainer`
+	- Messages root: `$ScrollContainer/VBoxContainer`
+- Contact list lookup:
+	- Resolves the list node at relative path `../PanelContainer/ScrollContainer/Chatlist` from the ChatView.
+
+### Scene wiring assumptions
+- `main_window.tscn` contains:
+	- Left panel: `PanelContainer/ScrollContainer/Chatlist` (with `contact_handler.gd` attached to `Chatlist`).
+	- Right panel: `ChatView` (with `chat_handler.gd` attached), which finds and connects to the `Chatlist` at runtime.
+- `contact_card.tscn` root node is a `PanelContainer` with an `HBoxContainer` child holding the icon and text.
+
+---
+
+## Extending and Reuse
+- To build other UI on top of the parsed data, create a script that extends `ChatJsonView` and override `_apply_to_ui()` to bind your nodes.
+- You can switch conversations at runtime by calling `reload_with_path(path)`; the base class handles parsing and then calls your `_apply_to_ui()`.
+
+## Troubleshooting
+- Clicking a contact doesn’t load the chat:
+	- Ensure `contact_card.gd` is attached to the root `PanelContainer` of the card.
+	- Verify child nodes use `MOUSE_FILTER_PASS` and the panel uses `MOUSE_FILTER_STOP` (handled automatically in `_ready()`).
+	- Confirm `chat_handler.gd` is present on `ChatView` and can find `../PanelContainer/ScrollContainer/Chatlist`.
+- Focus style not applied:
+	- Ensure `res://assets/ui/contact_card_focus.tres` exists.
+	- Confirm the card’s `set_selected(true)` is being called (handled by `chat_handler.gd` on selection).
+- Avatar not showing:
+	- Check `profile_icon_path` resolves to a `Texture2D` and the resource exists.
+- No chats appear:
+	- Ensure your JSON files are in `res://scripts/chats/` and end with `.json`.
+	- Filenames starting with `.` are ignored.
