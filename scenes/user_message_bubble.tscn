@@ -4,17 +4,11 @@
 [ext_resource type="Theme" uid="uid://ylaclft01m8p" path="res://assets/ui/styling.tres" id="3_r6wk0"]
 
 [node name="user_message_bubble" type="MarginContainer"]
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -544.0
-offset_top = -90.0
-offset_bottom = 90.0
+anchors_preset = -1
 grow_horizontal = 0
 grow_vertical = 2
 size_flags_horizontal = 8
+size_flags_vertical = 4
 
 [node name="bubble" type="NinePatchRect" parent="."]
 layout_mode = 2
@@ -35,12 +29,16 @@ theme_override_constants/margin_top = 50
 theme_override_constants/margin_right = 70
 theme_override_constants/margin_bottom = 50
 
-[node name="message" type="Label" parent="MarginContainer"]
-custom_minimum_size = Vector2(1, 1)
+[node name="message" type="RichTextLabel" parent="MarginContainer"]
 layout_mode = 2
-size_flags_vertical = 1
+focus_mode = 2
 theme = ExtResource("3_r6wk0")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/normal_font_size = 50
+bbcode_enabled = true
 text = "Hello, this is a test."
+fit_content = true
+scroll_active = false
+autowrap_mode = 0
 horizontal_alignment = 2
 vertical_alignment = 1
+selection_enabled = true
