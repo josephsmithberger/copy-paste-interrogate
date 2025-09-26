@@ -15,14 +15,14 @@ extends ChatJsonView
 const NPC_BUBBLE_SCENE_PATH := "res://scenes/npc_message_bubble.tscn"
 const PLAYER_BUBBLE_SCENE_PATH := "res://scenes/user_message_bubble.tscn"
 const TEMPLATE_CHAT_PATH := "res://scripts/chats/template_chat.json"
-const SEND_SOUND_PATH := "res://assets/ui/audio/send.mp3"
-const RECIEVE_SOUND_PATH := "res://assets/ui/audio/recieve.mp3"
+
 
 var _npc_bubble_scene: PackedScene
 var _player_bubble_scene: PackedScene
 var _loaded_once: bool = false
 var _bottom_sep: HSeparator
 var _auto_selected: bool = false
+var _scroll_tween: Tween
 
 # Public knobs
 @export var scroll_ease_duration: float = 0.5
@@ -35,7 +35,8 @@ var _current_contact_card: Node
 @onready var _scroll: ScrollContainer = $ScrollContainer
 @onready var _messages_root: VBoxContainer = $ScrollContainer/VBoxContainer
 @onready var _message_input: LineEdit = $VBoxContainer/Message
-@onready var audiostream:AudioStreamPlayer = $AudioStreamPlayer
+@onready var send_audio:AudioStreamPlayer = $send_audio
+@onready var recieve_audio:AudioStreamPlayer = $recieve_audio
 
 func _ready() -> void:
 	# Do not call super._ready(); we only load when a contact is clicked.
@@ -216,20 +217,30 @@ func _scroll_to_bottom_async() -> void:
 	await get_tree().process_frame
 	_scroll_to_bottom()
 
-func _scroll_to_bottom_smooth(duration: float = 0.25) -> void:
+func _scroll_to_bottom_smooth(duration: float = 0.5) -> void:
 	if _scroll == null:
 		return
-	# Wait two frames for layout to settle, then animate scroll to the latest value
+	# Run async to avoid blocking callers; fire-and-forget
+	_call_deferred_scroll_smooth(duration)
+
+func _call_deferred_scroll_smooth(duration: float) -> void:
+	_scroll_smooth_async(duration)
+
+func _scroll_smooth_async(duration: float) -> void:
 	await get_tree().process_frame
-	await get_tree().process_frame
+	await get_tree().process_frame # two frames for font wrap/layout stability
+	if _scroll == null:
+		return
 	var bar := _scroll.get_v_scroll_bar()
 	var target := int(bar.max_value)
+	if _scroll_tween and _scroll_tween.is_valid():
+		_scroll_tween.kill()
 	var start := _scroll.scroll_vertical
 	if target <= start:
 		return
-	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_scroll, "scroll_vertical", target, duration)
+	_scroll_tween = create_tween()
+	_scroll_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_scroll_tween.tween_property(_scroll, "scroll_vertical", target, duration)
 
 
 func _on_message_text_submitted(new_text: String) -> void:
@@ -254,8 +265,7 @@ func _on_message_text_submitted(new_text: String) -> void:
 		"success":
 			_append_player_bubble(text)
 			var lines_s: Array = res.get("npc_messages", [])
-			for l in lines_s:
-				_append_npc_bubble(str(l))
+			await _append_npc_messages_with_delay(lines_s)
 			_update_selected_contact_last_message(lines_s)
 			var new_words_s: Array = res.get("unlock_words", [])
 			if new_words_s.size() > 0:
@@ -269,8 +279,7 @@ func _on_message_text_submitted(new_text: String) -> void:
 		"wrong":
 			_append_player_bubble(text)
 			var lines: Array = res.get("npc_messages", [])
-			for l in lines:
-				_append_npc_bubble(str(l))
+			await _append_npc_messages_with_delay(lines)
 			_update_selected_contact_last_message(lines)
 			var new_words: Array = res.get("unlock_words", [])
 			if new_words.size() > 0:
@@ -281,7 +290,7 @@ func _on_message_text_submitted(new_text: String) -> void:
 		_:
 			# Fallback: treat as wrong
 			_append_player_bubble(text)
-			_append_npc_bubble("Huh?")
+			await _append_npc_messages_with_delay(["Huh?"])
 			_update_selected_contact_last_message(["Huh?"])
 			_scroll_to_bottom_smooth(scroll_ease_duration)
 
@@ -298,10 +307,18 @@ func _try_autoselect_template() -> void:
 			break
 
 func _append_player_bubble(text: String) -> void:
+	send_audio.play()
 	_append_bubble(text, true)
 
 func _append_npc_bubble(text: String) -> void:
+	recieve_audio.play()
 	_append_bubble(text, false)
+
+func _append_npc_messages_with_delay(lines: Array, delay: float = 0.3) -> void:
+	for l in lines:
+		await get_tree().create_timer(delay).timeout
+		_append_npc_bubble(str(l))
+		_scroll_to_bottom_smooth(scroll_ease_duration)
 
 func _append_bubble(text: String, is_player: bool) -> void:
 	if _messages_root == null:

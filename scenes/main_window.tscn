@@ -1,9 +1,11 @@
-[gd_scene load_steps=12 format=3 uid="uid://86c4yi82mspk"]
+[gd_scene load_steps=14 format=3 uid="uid://86c4yi82mspk"]
 
 [ext_resource type="Theme" uid="uid://ylaclft01m8p" path="res://assets/ui/styling.tres" id="1_ax7xg"]
 [ext_resource type="Script" uid="uid://b27qw68lgcnix" path="res://scripts/contact_handler.gd" id="2_exmdq"]
 [ext_resource type="Script" uid="uid://cgefaxr1kiuco" path="res://scripts/chat_handler.gd" id="3_ax7xg"]
 [ext_resource type="Shader" uid="uid://dxvbib4fc8jai" path="res://assets/ui/window_falloff_blur.gdshader" id="4_ax7xg"]
+[ext_resource type="AudioStream" uid="uid://dlckp8iapxhln" path="res://assets/ui/audio/recieve.mp3" id="4_j4oxs"]
+[ext_resource type="AudioStream" uid="uid://b6qmnq3yku406" path="res://assets/ui/audio/send.mp3" id="5_c4u0h"]
 [ext_resource type="Texture2D" uid="uid://drxt0u0y3y1t5" path="res://assets/ui/symbols/Untitled-1.png" id="5_exmdq"]
 [ext_resource type="PackedScene" uid="uid://bi85ytusv3o3r" path="res://scenes/error_notification.tscn" id="6_k1aoa"]
 
@@ -24,12 +26,6 @@ corner_radius_bottom_right = 35
 corner_radius_bottom_left = 35
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_lr1yk"]
-resource_local_to_scene = false
-resource_name = ""
-content_margin_left = -1.0
-content_margin_top = -1.0
-content_margin_right = -1.0
-content_margin_bottom = -1.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_exmdq"]
 shader = ExtResource("4_ax7xg")
@@ -122,7 +118,11 @@ layout_mode = 2
 theme = ExtResource("1_ax7xg")
 script = ExtResource("3_ax7xg")
 
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="MarginContainer/HSplitContainer/ChatView"]
+[node name="recieve_audio" type="AudioStreamPlayer" parent="MarginContainer/HSplitContainer/ChatView"]
+stream = ExtResource("4_j4oxs")
+
+[node name="send_audio" type="AudioStreamPlayer" parent="MarginContainer/HSplitContainer/ChatView"]
+stream = ExtResource("5_c4u0h")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/HSplitContainer/ChatView"]
 layout_mode = 2
