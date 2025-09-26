@@ -15,6 +15,11 @@ run/main_scene="uid://86c4yi82mspk"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+DialogueEngine="*res://scripts/autoloads/DialogueEngine.gd"
+Vocabulary="*res://scripts/autoloads/Vocabulary.gd"
+
 [display]
 
 window/stretch/mode="canvas_items"

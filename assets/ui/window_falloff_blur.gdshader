@@ -1,5 +1,4 @@
 // Godot 4 Shader for a vertical blur falloff effect.
-// Author: Gemini
 // Date: 2024-05-23
 //
 // This shader blurs the background behind it with a vertical gradient falloff.

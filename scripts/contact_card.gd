@@ -58,6 +58,17 @@ func _apply_to_ui() -> void:
 			var last_text := get_last_message_text()
 			last_label.text = last_text
 
+func refresh_last_message(text_override: String = "") -> void:
+	# Update only the last message label; used by chat handler when new messages arrive
+	var last_path := NodePath("HBoxContainer/VBoxContainer/Last_message")
+	if has_node(last_path):
+		var last_label := get_node(last_path) as Label
+		if last_label:
+			if text_override != "":
+				last_label.text = text_override
+			else:
+				last_label.text = get_last_message_text()
+
 func _gui_input(event):
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:

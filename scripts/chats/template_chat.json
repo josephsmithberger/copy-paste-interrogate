@@ -1,10 +1,67 @@
 {
 	"name": "Apple Bot",
-		"profile_icon_path": "res://assets/profile_icons/placeholder.png",
+	"profile_icon_path": "res://assets/profile_icons/placeholder.png",
 	"chat_history": [
-		{ "author": "contact", "text": "Hey there! This is a template chat. 😭" },
-		{ "author": "player", "text": "Cool, I'll use this as a starting point." },
-		"You can also provide a simple string; defaults to contact",
-		{ "author": "contact", "text": "Swap in your own messages and profile icon." }
+		{
+			"author": "contact",
+			"text": "Welcome. Read carefully and answer using only words you've seen."
+		},
+		{
+			"author": "contact",
+			"text": "Fact: The safe color is green."
+		},
+		{
+			"author": "contact",
+			"text": "Question: What is the safe color?"
+		}
+	],
+	"steps": [
+		{
+			"expected": {
+				"tokens": [
+					"green"
+				],
+				"match": "set"
+			},
+			"reject_unknown_words": true,
+			"on_wrong": {
+				"npc": [
+					"Huh?",
+					"Answer with a word you've seen."
+				]
+			},
+			"on_success": {
+				"npc": [
+					"Correct.",
+					"Now, ask me for the door code using words you've seen."
+				],
+				"unlock_words": [
+					"door",
+					"code"
+				]
+			}
+		},
+		{
+			"expected": {
+				"tokens": [
+					"door",
+					"code"
+				],
+				"match": "set"
+			},
+			"on_wrong": {
+				"npc": [
+					"That's not it."
+				]
+			},
+			"on_success": {
+				"npc": [
+					"It's 1234."
+				],
+				"unlock_words": [
+					"1234"
+				]
+			}
+		}
 	]
 }
