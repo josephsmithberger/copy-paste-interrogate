@@ -1,0 +1,88 @@
+[gd_scene load_steps=6 format=3 uid="uid://bi85ytusv3o3r"]
+
+[ext_resource type="Texture2D" uid="uid://bipgc3ver47j2" path="res://assets/ui/symbols/warning.png" id="1_s2ktx"]
+[ext_resource type="Theme" uid="uid://ylaclft01m8p" path="res://assets/ui/styling.tres" id="2_07qvp"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vn2gx"]
+content_margin_left = 20.0
+content_margin_top = 20.0
+content_margin_right = 20.0
+content_margin_bottom = 20.0
+bg_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.6, 0.6, 0.6, 0.5372549)
+border_blend = true
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_s2ktx"]
+color = Color(0.13333334, 0.13333334, 0.13333334, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d5tg0"]
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="error_notification" type="Popup"]
+disable_3d = true
+transparent_bg = true
+oversampling_override = 1.0
+initial_position = 1
+size = Vector2i(478, 191)
+visible = true
+
+[node name="panel" type="PanelContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -239.0
+offset_top = -95.5
+offset_right = 239.0
+offset_bottom = 95.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_vn2gx")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="panel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TextureRect" type="TextureRect" parent="panel/VBoxContainer"]
+modulate = Color(0.83137256, 0.827451, 0.83137256, 1)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture = ExtResource("1_s2ktx")
+
+[node name="Label" type="Label" parent="panel/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_07qvp")
+theme_override_colors/font_color = Color(0.85882354, 0.85490197, 0.85882354, 1)
+text = "Network Error: Push of unverified packets attempted. 422"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="panel/VBoxContainer"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 10
+theme_override_styles/separator = SubResource("StyleBoxLine_s2ktx")
+
+[node name="Button" type="Button" parent="panel/VBoxContainer"]
+custom_minimum_size = Vector2(100, 25)
+layout_mode = 2
+size_flags_horizontal = 4
+theme = ExtResource("2_07qvp")
+theme_override_colors/font_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_d5tg0")
+text = "OK"
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="panel"]

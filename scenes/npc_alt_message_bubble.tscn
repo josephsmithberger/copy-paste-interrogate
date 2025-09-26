@@ -1,0 +1,32 @@
+[gd_scene load_steps=3 format=3 uid="uid://cudaby0k5065k"]
+
+[ext_resource type="Script" uid="uid://ccl3ec8ksuwd8" path="res://scripts/npc_alt_message_bubble.gd" id="1_ewxr5"]
+[ext_resource type="Texture2D" uid="uid://chcme5ko1j18" path="res://assets/ui/npc_message_bubble.png" id="2_q57x6"]
+
+[node name="npc_message_bubble" type="MarginContainer"]
+grow_vertical = 2
+script = ExtResource("1_ewxr5")
+
+[node name="bubble" type="NinePatchRect" parent="."]
+layout_mode = 2
+texture = ExtResource("2_q57x6")
+patch_margin_left = 110
+patch_margin_top = 100
+patch_margin_right = 100
+patch_margin_bottom = 80
+axis_stretch_horizontal = 2
+axis_stretch_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+theme_override_constants/margin_left = 70
+theme_override_constants/margin_top = 45
+theme_override_constants/margin_right = 25
+theme_override_constants/margin_bottom = 45
+
+[node name="TextureButton" type="TextureButton" parent="MarginContainer"]
+layout_mode = 2
+
+[connection signal="pressed" from="MarginContainer/TextureButton" to="." method="_on_texture_button_pressed"]

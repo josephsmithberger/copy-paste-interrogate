@@ -15,6 +15,8 @@ extends ChatJsonView
 const NPC_BUBBLE_SCENE_PATH := "res://scenes/npc_message_bubble.tscn"
 const PLAYER_BUBBLE_SCENE_PATH := "res://scenes/user_message_bubble.tscn"
 const TEMPLATE_CHAT_PATH := "res://scripts/chats/template_chat.json"
+const SEND_SOUND_PATH := "res://assets/ui/audio/send.mp3"
+const RECIEVE_SOUND_PATH := "res://assets/ui/audio/recieve.mp3"
 
 var _npc_bubble_scene: PackedScene
 var _player_bubble_scene: PackedScene
@@ -33,6 +35,7 @@ var _current_contact_card: Node
 @onready var _scroll: ScrollContainer = $ScrollContainer
 @onready var _messages_root: VBoxContainer = $ScrollContainer/VBoxContainer
 @onready var _message_input: LineEdit = $VBoxContainer/Message
+@onready var audiostream:AudioStreamPlayer = $AudioStreamPlayer
 
 func _ready() -> void:
 	# Do not call super._ready(); we only load when a contact is clicked.
