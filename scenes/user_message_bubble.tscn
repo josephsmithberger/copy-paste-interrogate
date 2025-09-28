@@ -13,10 +13,10 @@ script = ExtResource("4_script")
 [node name="bubble" type="NinePatchRect" parent="."]
 layout_mode = 2
 texture = ExtResource("1_oevmw")
-patch_margin_left = 110
-patch_margin_top = 100
-patch_margin_right = 100
-patch_margin_bottom = 80
+patch_margin_left = 50
+patch_margin_top = 50
+patch_margin_right = 60
+patch_margin_bottom = 50
 axis_stretch_horizontal = 2
 axis_stretch_vertical = 2
 
@@ -24,19 +24,19 @@ axis_stretch_vertical = 2
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 4
-theme_override_constants/margin_left = 45
-theme_override_constants/margin_top = 45
-theme_override_constants/margin_right = 55
-theme_override_constants/margin_bottom = 45
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 12
 
 [node name="message" type="RichTextLabel" parent="MarginContainer"]
 layout_mode = 2
 focus_mode = 2
 theme = ExtResource("3_r6wk0")
 theme_override_colors/selection_color = Color(0, 0.41423574, 0.79860514, 0.57254905)
-theme_override_font_sizes/normal_font_size = 50
+theme_override_font_sizes/normal_font_size = 30
 bbcode_enabled = true
-text = "green"
+text = "this is a test"
 fit_content = true
 scroll_active = false
 autowrap_mode = 0

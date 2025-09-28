@@ -145,7 +145,7 @@ mouse_filter = 2
 z_index = 1
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 430
+theme_override_constants/separation = 450
 
 [node name="Profile_icon" type="TextureRect" parent="MarginContainer/HSplitContainer/ChatView/VBoxContainer"]
 layout_mode = 2
@@ -164,7 +164,7 @@ theme_override_colors/font_selected_color = Color(0, 0.41423574, 0.79860514, 0.5
 theme_override_colors/font_placeholder_color = Color(0.59607846, 0.59607846, 0.6156863, 1)
 theme_override_colors/clear_button_color = Color(0.5033745, 0.5033746, 0.5033746, 1)
 theme_override_colors/clear_button_color_pressed = Color(0.6319401, 0.6319462, 0.6509897, 1)
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 30
 theme_override_icons/clear = ExtResource("5_exmdq")
 placeholder_text = "iMessage"
 max_length = 50
@@ -173,7 +173,6 @@ virtual_keyboard_show_on_focus = false
 clear_button_enabled = true
 
 [node name="error_notification" parent="." instance=ExtResource("6_k1aoa")]
-oversampling_override = 1.0
 title = "Error"
 visible = false
 always_on_top = true

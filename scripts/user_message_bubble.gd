@@ -7,11 +7,11 @@ extends MarginContainer
 @onready var content_box: MarginContainer = $MarginContainer
 @onready var message_label: RichTextLabel = $MarginContainer/message
 
-const MAX_WIDTH: int = 420   # Hard wrap ceiling (tweakable)
-const SOFT_WIDTH: int = 380  # Preferred max before wrapping (iMessage feel)
 const MIN_WIDTH: int = 48    # Allow very short words without forced wide bubble
+const DEFAULT_SOFT_WIDTH: float = 380.0
 
 var _pending_text: String = ""
+var _max_content_width: float = DEFAULT_SOFT_WIDTH
 
 func _ready():
 	if message_label:
@@ -26,28 +26,62 @@ func set_message_text(text: String):
 	if not is_inside_tree():
 		await ready
 	message_label.text = text
-	call_deferred("_measure_and_resize")
+	_measure_and_resize()
+
+func set_max_content_width(width: float) -> void:
+	var clamped: float = max(float(MIN_WIDTH), width)
+	if absf(clamped - _max_content_width) < 0.5:
+		return
+	_max_content_width = clamped
+	if is_inside_tree():
+		_measure_and_resize()
 
 func _measure_and_resize():
 	if not message_label:
 		return
-	# Step 1: allow it to expand without wrap to measure natural width up to MAX_WIDTH
-	message_label.autowrap_mode = TextServer.AUTOWRAP_OFF
-	message_label.custom_minimum_size.x = 0
-	await get_tree().process_frame
-	var natural: float = float(message_label.size.x)
-
-	var target_width: float = clamp(natural, float(MIN_WIDTH), float(SOFT_WIDTH))
-	var needs_wrap := natural > SOFT_WIDTH
+	var font := message_label.get_theme_font("normal_font")
+	if font == null:
+		font = message_label.get_theme_font("font")
+	var font_size: int = message_label.get_theme_font_size("normal_font")
+	if font_size == -1:
+		font_size = message_label.get_theme_font_size("font_size")
+	if font_size <= 0:
+		font_size = 16
+	var text := message_label.text
+	var lines: PackedStringArray = text.split("\n")
+	if lines.is_empty():
+		lines.append(text)
+	var natural: float = float(MIN_WIDTH)
+	if font:
+		var max_width: float = 0.0
+		for line in lines:
+			var line_width := font.get_string_size(line, font_size).x
+			if line_width > max_width:
+				max_width = line_width
+		natural = max_width
+	else:
+		natural = float(text.length()) * float(font_size) * 0.5
+	var soft_width: float = max(float(MIN_WIDTH), _max_content_width)
+	var padding: float = _get_horizontal_padding()
+	var label_min: float = max(12.0, float(MIN_WIDTH) - padding)
+	var label_soft: float = max(label_min, soft_width - padding)
+	var target_width: float = clamp(natural, label_min, label_soft)
+	var needs_wrap: bool = natural > label_soft
 	if needs_wrap:
 		message_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		message_label.custom_minimum_size.x = SOFT_WIDTH
+		message_label.custom_minimum_size.x = label_soft
 	else:
 		message_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		message_label.custom_minimum_size.x = target_width
-
-	await get_tree().process_frame
+	message_label.reset_size()
 	_final_layout_sync()
+
+func _get_horizontal_padding() -> float:
+	if content_box == null:
+		return 0.0
+	var left := float(content_box.get_theme_constant("margin_left", "MarginContainer"))
+	var right := float(content_box.get_theme_constant("margin_right", "MarginContainer"))
+	return max(0.0, left + right)
 
 func _final_layout_sync():
 	# Ensure NinePatch bubble matches the content box size exactly.

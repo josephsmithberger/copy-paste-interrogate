@@ -15,6 +15,10 @@ extends ChatJsonView
 const NPC_BUBBLE_SCENE_PATH := "res://scenes/npc_message_bubble.tscn"
 const PLAYER_BUBBLE_SCENE_PATH := "res://scenes/user_message_bubble.tscn"
 const DEFAULT_PROFILE_ICON_PATH := "res://assets/profile_icons/placeholder.png"
+const BUBBLE_WIDTH_RATIO := 0.75
+const BUBBLE_WIDTH_FALLBACK := 480.0
+const BUBBLE_WIDTH_MIN := 96.0
+const BUBBLE_WIDTH_MAX := 380.0
 
 
 var _npc_bubble_scene: PackedScene
@@ -179,7 +183,7 @@ func _apply_to_ui() -> void:
 	# Enable input once a chat is loaded
 	if _message_input:
 		_message_input.editable = true
-		_message_input.placeholder_text = "Message"
+		_message_input.placeholder_text = "iMessage"
 
 func _apply_profile_icon() -> void:
 	if _profile_icon:
@@ -238,6 +242,10 @@ func _rebuild_message_bubbles() -> void:
 			row.add_child(bubble)
 			row.add_child(spacer)
 
+		var soft_width: float = _get_bubble_soft_width()
+		if bubble.has_method("set_max_content_width"):
+			bubble.set_max_content_width(soft_width)
+
 		# Ensure bubble itself does NOT expand horizontally so it shrinks to its content
 		if bubble is Control:
 			bubble.size_flags_horizontal = 0
@@ -257,6 +265,7 @@ func _rebuild_message_bubbles() -> void:
 	_bottom_sep.custom_minimum_size = Vector2(0, 100)
 	_bottom_sep.add_theme_stylebox_override("separator", StyleBoxEmpty.new())
 	_messages_root.add_child(_bottom_sep)
+	_update_message_width_limits()
 
 func _defer_scroll_to_bottom() -> void:
 	# Ensure layout updates settle over a couple of frames, then scroll
@@ -388,6 +397,9 @@ func _append_bubble(text: String, is_player: bool) -> void:
 	else:
 		row.add_child(bubble)
 		row.add_child(spacer)
+	var soft_width: float = _get_bubble_soft_width()
+	if bubble.has_method("set_max_content_width"):
+		bubble.set_max_content_width(soft_width)
 	if bubble is Control:
 		bubble.size_flags_horizontal = 0
 	if bubble.has_method("set_message_text"):
@@ -399,6 +411,8 @@ func _append_bubble(text: String, is_player: bool) -> void:
 	# Keep bottom separator as last child
 	if _bottom_sep and _bottom_sep.get_parent() == _messages_root:
 		_messages_root.move_child(_bottom_sep, _messages_root.get_child_count() - 1)
+	else:
+		pass
 
 func _update_contact_last_message(contact_path: String, last_text: String) -> void:
 	var contact_list := _get_contact_list()
@@ -518,6 +532,35 @@ func _seed_vocabulary_from_history() -> void:
 		if author == "contact":
 			var text := str(entry.get("text", ""))
 			vocab.add_words([text])
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		_update_message_width_limits()
+
+func _get_bubble_soft_width() -> float:
+	var base_width: float = 0.0
+	if _scroll:
+		base_width = _scroll.size.x
+		if base_width <= 0.0:
+			base_width = _scroll.get_rect().size.x
+	if base_width <= 0.0 and _messages_root:
+		base_width = _messages_root.size.x
+	if base_width <= 0.0:
+		base_width = BUBBLE_WIDTH_FALLBACK
+	var target: float = base_width * BUBBLE_WIDTH_RATIO
+	if target <= 0.0:
+		target = BUBBLE_WIDTH_FALLBACK * BUBBLE_WIDTH_RATIO
+	return clamp(target, BUBBLE_WIDTH_MIN, BUBBLE_WIDTH_MAX)
+
+func _update_message_width_limits() -> void:
+	if _messages_root == null:
+		return
+	var soft_width: float = _get_bubble_soft_width()
+	for child in _messages_root.get_children():
+		if child is HBoxContainer:
+			for node in child.get_children():
+				if node.has_method("set_max_content_width"):
+					node.set_max_content_width(soft_width)
 
 func _show_reject_feedback(_unknown_words: Array) -> void:
 	# Minimal feedback: flash the input field red via a modulate tween

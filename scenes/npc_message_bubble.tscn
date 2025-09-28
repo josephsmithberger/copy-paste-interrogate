@@ -5,16 +5,19 @@
 [ext_resource type="Script" uid="uid://dnmdk73ulf2ie" path="res://scripts/npc_message_bubble.gd" id="3_script"]
 
 [node name="npc_message_bubble" type="MarginContainer"]
+offset_top = -61.0
+offset_right = 316.0
+offset_bottom = 61.0
 grow_vertical = 2
 script = ExtResource("3_script")
 
 [node name="bubble" type="NinePatchRect" parent="."]
 layout_mode = 2
 texture = ExtResource("1_oif11")
-patch_margin_left = 110
-patch_margin_top = 100
-patch_margin_right = 100
-patch_margin_bottom = 80
+patch_margin_left = 50
+patch_margin_top = 50
+patch_margin_right = 60
+patch_margin_bottom = 50
 axis_stretch_horizontal = 2
 axis_stretch_vertical = 2
 
@@ -22,17 +25,17 @@ axis_stretch_vertical = 2
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 4
-theme_override_constants/margin_left = 70
-theme_override_constants/margin_top = 45
-theme_override_constants/margin_right = 25
-theme_override_constants/margin_bottom = 45
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 22
 
 [node name="message" type="RichTextLabel" parent="MarginContainer"]
 layout_mode = 2
 focus_mode = 2
 theme = ExtResource("2_i0r60")
 theme_override_colors/selection_color = Color(0.003921569, 0.5254902, 1, 0.57254905)
-theme_override_font_sizes/normal_font_size = 50
+theme_override_font_sizes/normal_font_size = 30
 text = "Hello, this is a test."
 fit_content = true
 scroll_active = false
