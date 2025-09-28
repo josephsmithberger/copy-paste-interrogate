@@ -1,0 +1,29 @@
+{
+  "name": "Lucy",
+  "icon": "res://assets/profile_icons/placeholder.png",
+  "chat": [
+	"Welcome. Read carefully and answer using only words you've seen.",
+	"Fact: The safe color is green.",
+	"Question: What is the safe color?",
+	{
+	  "expect_tokens": ["green"],
+	  "match": "set",
+	  "success": [
+		"Correct.",
+        "Now, ask me for the door code using words you've seen."
+	  ],
+	  "fail": [
+		"Huh?",
+        "Answer with a word you've seen."
+	  ],
+	  "allow_unknown": false
+	},
+	{
+	  "expect_tokens": ["door", "code"],
+	  "match": "set",
+	  "success": "It's 1234.",
+	  "fail": "That's not it.",
+	  "allow_unknown": false
+	}
+  ]
+}

@@ -35,6 +35,9 @@ func _populate_contact_list() -> void:
 		push_warning("contact_handler: No files found in %s" % CHATS_DIR)
 	files.sort() # Stable order
 
+	# NOTE: Cards add themselves to the 'contact_cards' group in their _ready().
+	# We rely on that for single-selection logic managed by ChatHandler.
+
 	var insert_after: Node = _anchor
 	var added := 0
 	for f in files:

@@ -25,8 +25,14 @@ func _ready() -> void:
 	# Cache default style so we can restore when unselected
 	_default_panel_style = get_theme_stylebox("panel")
 
-	# Continue with base ready to load initial JSON and populate UI
-	super._ready()
+	# Continue with base ready only if a path is set (explicit empty path means defer)
+	if chat_json_path != "":
+		super._ready()
+
+	# Add to a global group so ChatHandler can reliably find ALL cards even if
+	# scene hierarchy changes (prevents multiple lingering highlights when path lookup fails)
+	if not is_in_group("contact_cards"):
+		add_to_group("contact_cards")
 
 func set_selected(selected: bool) -> void:
 	# Apply or restore the PanelContainer style box
@@ -38,10 +44,11 @@ func set_selected(selected: bool) -> void:
 		else:
 			remove_theme_stylebox_override("panel")
 
+
 func _apply_to_ui() -> void:
-	var icon_path := NodePath("HBoxContainer/Icon")
-	if has_node(icon_path):
-		var icon_rect := get_node(icon_path) as TextureRect
+	var icon_node_path := NodePath("HBoxContainer/Icon")
+	if has_node(icon_node_path):
+		var icon_rect := get_node(icon_node_path) as TextureRect
 		if icon_rect:
 			icon_rect.texture = profile_texture
 

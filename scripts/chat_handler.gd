@@ -14,14 +14,12 @@ extends ChatJsonView
 
 const NPC_BUBBLE_SCENE_PATH := "res://scenes/npc_message_bubble.tscn"
 const PLAYER_BUBBLE_SCENE_PATH := "res://scenes/user_message_bubble.tscn"
-const TEMPLATE_CHAT_PATH := "res://scripts/chats/template_chat.json"
 
 
 var _npc_bubble_scene: PackedScene
 var _player_bubble_scene: PackedScene
 var _loaded_once: bool = false
 var _bottom_sep: HSeparator
-var _auto_selected: bool = false
 var _scroll_tween: Tween
 
 # Public knobs
@@ -48,8 +46,7 @@ func _ready() -> void:
 	if _message_input:
 		_message_input.editable = false
 		_message_input.placeholder_text = "Select a contact to start"
-	# Try to auto-select the template after the list is available
-	call_deferred("_try_autoselect_template")
+	# No implicit auto-selection; user must click a contact
 
 func _connect_existing_contact_cards() -> void:
 	var contact_list := _get_contact_list()
@@ -69,11 +66,7 @@ func _watch_for_new_contact_cards() -> void:
 
 func _on_contact_list_child_entered(child: Node) -> void:
 	_try_connect_card(child)
-	# If the template card appears later, auto-select it once
-	if not _loaded_once and not _auto_selected and child is ChatJsonView:
-		if (child as ChatJsonView).chat_json_path == TEMPLATE_CHAT_PATH:
-			_auto_selected = true
-			_on_contact_selected(TEMPLATE_CHAT_PATH, child)
+	# No auto-selection logic
 
 func _try_connect_card(node: Node) -> void:
 	if node == null:
@@ -96,18 +89,25 @@ func _get_contact_list() -> Node:
 
 func _on_contact_selected(chat_path: String, card: Node) -> void:
 	# If we have never loaded, force load even if path matches default.
-	if chat_path == chat_json_path and _loaded_once:
+	if chat_path == chat_json_path and _loaded_once and card == _current_contact_card:
+		# Same card re-clicked; nothing to change.
 		return
 	reload_with_path(chat_path)
 	current_contact_path = chat_path
 	_current_contact_card = card
 
-	# Visual selection: mark the card that emitted the signal as selected, others unselected
-	var contact_list := _get_contact_list()
-	if contact_list:
-		for child in contact_list.get_children():
-			if child.has_method("set_selected"):
-				child.set_selected(child == card)
+	# Visual selection: unselect ALL existing cards via group (more robust than relying only on list hierarchy)
+	for c in get_tree().get_nodes_in_group("contact_cards"):
+		if c.has_method("set_selected"):
+			c.set_selected(c == card)
+
+	# (Optional) Fallback: if group was somehow empty, use the original contact list traversal
+	if get_tree().get_nodes_in_group("contact_cards").is_empty():
+		var contact_list := _get_contact_list()
+		if contact_list:
+			for child in contact_list.get_children():
+				if child.has_method("set_selected"):
+					child.set_selected(child == card)
 
 func _apply_to_ui() -> void:
 	# Called after a successful load in reload_with_path().
@@ -121,7 +121,8 @@ func _apply_to_ui() -> void:
 			file.close()
 			var data: Variant = JSON.parse_string(text)
 			if typeof(data) == TYPE_DICTIONARY:
-				engine.load_conversation(chat_json_path, data)
+				# Do not force reload if already present; preserves step index & history
+				engine.load_conversation(chat_json_path, data, false)
 	_apply_profile_icon()
 	_rebuild_message_bubbles()
 	_seed_vocabulary_from_history()
@@ -153,7 +154,15 @@ func _rebuild_message_bubbles() -> void:
 	top_sep.add_theme_stylebox_override("separator", StyleBoxEmpty.new())
 	_messages_root.add_child(top_sep)
 
-	for entry in chat_history:
+	# Prefer full persistent history from DialogueEngine if available
+	var engine := get_node_or_null("/root/DialogueEngine")
+	var display_history: Array = []
+	if engine and engine.has_method("get_history"):
+		display_history = engine.get_history(chat_json_path)
+	if display_history.is_empty():
+		display_history = chat_history
+
+	for entry in display_history:
 		var author := str(entry.get("author", "contact"))
 		var text := str(entry.get("text", ""))
 		var scene: PackedScene = _npc_bubble_scene
@@ -267,11 +276,6 @@ func _on_message_text_submitted(new_text: String) -> void:
 			var lines_s: Array = res.get("npc_messages", [])
 			await _append_npc_messages_with_delay(lines_s)
 			_update_selected_contact_last_message(lines_s)
-			var new_words_s: Array = res.get("unlock_words", [])
-			if new_words_s.size() > 0:
-				var vocab_s := get_node_or_null("/root/Vocabulary")
-				if vocab_s:
-					vocab_s.add_words(new_words_s)
 			# Clear only when accepted
 			if _message_input:
 				_message_input.clear()
@@ -281,11 +285,6 @@ func _on_message_text_submitted(new_text: String) -> void:
 			var lines: Array = res.get("npc_messages", [])
 			await _append_npc_messages_with_delay(lines)
 			_update_selected_contact_last_message(lines)
-			var new_words: Array = res.get("unlock_words", [])
-			if new_words.size() > 0:
-				var vocab := get_node_or_null("/root/Vocabulary")
-				if vocab:
-					vocab.add_words(new_words)
 			_scroll_to_bottom_smooth(scroll_ease_duration)
 		_:
 			# Fallback: treat as wrong
@@ -294,17 +293,7 @@ func _on_message_text_submitted(new_text: String) -> void:
 			_update_selected_contact_last_message(["Huh?"])
 			_scroll_to_bottom_smooth(scroll_ease_duration)
 
-func _try_autoselect_template() -> void:
-	if _loaded_once or _auto_selected:
-		return
-	var contact_list := _get_contact_list()
-	if contact_list == null:
-		return
-	for child in contact_list.get_children():
-		if child is ChatJsonView and (child as ChatJsonView).chat_json_path == TEMPLATE_CHAT_PATH:
-			_auto_selected = true
-			_on_contact_selected(TEMPLATE_CHAT_PATH, child)
-			break
+# _try_autoselect_template removed (legacy template loading)
 
 func _append_player_bubble(text: String) -> void:
 	send_audio.play()

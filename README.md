@@ -72,24 +72,38 @@ Notes:
 - Main window scene: `res://scenes/main_window.tscn`
 - Template JSON: `res://scripts/chats/template_chat.json`
 
-### JSON Schema
-- `name`: String. Display name for the contact.
-- `profile_icon_path`: String. Resource path to a `Texture2D` (e.g. PNG) used as the contact avatar.
-- `chat_history`: Array of entries. Each entry can be:
-	- Object: `{ "author": "contact" | "player", "text": "..." }`
-	- String: shorthand for `{ "author": "contact", "text": "..." }`
+### Simplified JSON Schema (Current)
+Minimal required fields:
+- `name`: String — Contact display name.
+- `icon`: String — Resource path to avatar texture.
+- `chat`: Array — Ordered mix of:
+	- String: NPC (contact) line shown immediately at load (pre-seed vocabulary) until the first step object appears.
+	- Step object: defines a gating expectation for the player's next input.
+
+Step object keys (all optional except one expectation key):
+- `expect`: Exact phrase match (normalized tokens).
+- `expect_tokens`: Array of tokens (order-insensitive if `match: "set"`, subset if `match: "contains"`).
+- `any_of`: Array of mini step objects (supports alternative expectations).
+- `match`: `"exact" | "set" | "contains"` (defaults: `exact` for `expect`, `set` for `expect_tokens`).
+- `success`: String or array of NPC lines appended on success (these lines also seed vocabulary).
+- `fail`: String or array of NPC lines on mismatch (optional).
+- `allow_unknown`: Bool (default false) — If true, player may introduce unseen words in this step.
+
+Automatic Vocabulary Rule:
+All tokens from displayed NPC lines and accepted player inputs become usable immediately in future messages. No manual `unlock` arrays.
 
 Example (`scripts/chats/template_chat.json`):
 
 ```
 {
 	"name": "Apple Bot",
-	"profile_icon_path": "res://template.PNG",
-	"chat_history": [
-		{ "author": "contact", "text": "Hey there! This is a template chat." },
-		{ "author": "player", "text": "Cool, I'll use this as a starting point." },
-		"You can also provide a simple string; defaults to contact",
-		{ "author": "contact", "text": "Swap in your own messages and profile icon." }
+	"icon": "res://assets/profile_icons/placeholder.png",
+	"chat": [
+		"Welcome. Read carefully and answer using only words you've seen.",
+		"Fact: The safe color is green.",
+		"Question: What is the safe color?",
+		{ "expect_tokens": ["green"], "match": "set", "success": ["Correct.", "Now ask me for the door code using words you've seen."], "fail": ["Huh?", "Answer using only known words."] },
+		{ "expect_tokens": ["door", "code"], "match": "set", "success": "It's 1234.", "fail": "That's not it." }
 	]
 }
 ```
@@ -114,16 +128,16 @@ Example (`scripts/chats/template_chat.json`):
 
 ### Adding a New Contact
 - Drop a `*.json` file into `res://scripts/chats/` (use the template as a starting point).
-- Ensure any avatar path in `profile_icon_path` is a valid Godot resource path (e.g., `res://assets/.../icon.png`).
+- Ensure the `icon` field is a valid Godot resource path (e.g., `res://assets/.../icon.png`).
 - Run the scene: entries appear automatically under the search field with separators.
 
 ### Consuming Parsed Data
 - Provided by `chat_json_view.gd` and available to subclasses:
-	- `get_contact_display_name()` → String name.
-	- `get_profile_texture()` → `Texture2D` for avatar (may be null if path invalid).
-	- `get_chat_history()` → Array of `{ author, text }` dictionaries.
-	- `get_last_message_text()` → String last message or empty.
-	- Signals: `chat_loaded`, `chat_failed(error)`.
+  - `get_contact_display_name()` → String name.
+  - `get_profile_texture()` → `Texture2D` for avatar (may be null if path invalid).
+  - `get_chat_history()` → Array of pre-seeded NPC `{ author, text }` dictionaries (only lines before first step).
+  - `get_last_message_text()` → String last message or empty.
+- Signals: `chat_loaded`, `chat_failed(error)`.
 
 ### Reuse in Other UI (e.g., Message Chain)
 - Create a new script that extends the base by path: `extends "res://scripts/chat_json_view.gd"`.
@@ -132,8 +146,8 @@ Example (`scripts/chats/template_chat.json`):
 
 ### Notes
 - Paths must be Godot resource paths (e.g. `res://...`).
-- If `profile_icon_path` is invalid or not a texture, a warning is logged and avatar will be null.
-- Non-array `chat_history` or non-dictionary root will log errors and safely fallback.
+- If `icon` is invalid or not a texture, a warning is logged and avatar will be null.
+- Legacy fields (`profile_icon_path`, `chat_history`, `steps`, `unlock_words`, etc.) are no longer supported. Use only `name`, `icon`, and unified `chat` entries (strings + step objects).
 
 ---
 
@@ -206,25 +220,8 @@ Both bubble scripts size the NinePatch to tightly wrap the text. The chat view a
 This section documents the public-facing APIs (exports, signals, and methods) and the expected scene wiring.
 
 ### Base class: `ChatJsonView` (res://scripts/chat_json_view.gd)
-- Extends: `Control`
-- Exported properties:
-	- `@export_file("*.json") var chat_json_path: String` — JSON source path. Defaults to the template.
-- Signals:
-	- `chat_loaded`
-	- `chat_failed(error: String)`
-- Properties (populated after load):
-	- `contact_name: String`
-	- `profile_icon_path: String`
-	- `profile_texture: Texture2D` (nullable)
-	- `chat_history: Array[Dictionary]` with `{ author: String, text: String }`
-- Methods:
-	- `load_chat_from_json()` — Loads, parses, and emits `chat_loaded` or `chat_failed`.
-	- `reload_with_path(new_path: String)` — Sets `chat_json_path` then calls `load_chat_from_json()`.
-	- `get_contact_display_name() -> String`
-	- `get_profile_texture() -> Texture2D`
-	- `get_chat_history() -> Array[Dictionary]`
-	- `get_last_message_text() -> String`
-	- `_apply_to_ui()` — Intentionally empty; subclasses override to bind parsed data to their UI.
+- Exposes contact identity + pre-step NPC lines only. Steps are handled by `DialogueEngine` from the same `chat` array.
+- API unchanged for consuming UI components; internal parsing simplified.
 
 Scene/node contracts expected by subclasses are documented below.
 
@@ -291,65 +288,14 @@ Scene/node contracts expected by subclasses are documented below.
 
 ---
 
-## Unlockable Steps (Linear progression)
-
-Jam-scoped linear gating that controls what players can send and how new words are unlocked. Initial `chat_history` renders at load; progression happens through `steps`.
-
-Schema additions in each chat JSON:
-- `steps`: Array of steps evaluated in order; no branching and no save system.
-	- `expected`: How the player must respond.
-		- `text`: exact string match after normalization.
-		- `tokens`: array of tokens that must be present; matching controlled by `match`.
-		- `alternatives`: array of `expected` objects; any match succeeds.
-		- `match`: "exact" | "contains" | "set" (default: "exact").
-	- `reject_unknown_words`: bool (default true) — if true, player messages using words not in the global vocabulary are rejected before sending.
-	- `on_wrong.npc`: array of strings — NPC fallback lines when input doesn’t match.
-	- `on_success.npc`: array of strings — NPC reply when input matches.
-	- `on_success.unlock_words`: array of strings — words to add to the global vocabulary immediately upon success.
-
-Matching & vocabulary rules:
-- Normalization lowercases and strips punctuation; tokenization accepts alphanumerics plus apostrophes.
-- If `reject_unknown_words` is true and the input uses any words not unlocked (or seen from `chat_history`), the message is rejected (no player bubble). Feedback is shown in the UI.
-- Steps are strictly linear; wrong inputs do not advance the index.
-
-Example (aligned with the current `scripts/chats/template_chat.json`):
-
-```
-{
-	"name": "Apple Bot",
-	"profile_icon_path": "res://assets/profile_icons/placeholder.png",
-	"chat_history": [
-		{ "author": "contact", "text": "Welcome. Read carefully and answer using only words you've seen." },
-		{ "author": "contact", "text": "Fact: The safe color is green." },
-		{ "author": "contact", "text": "Question: What is the safe color?" }
-	],
-	"steps": [
-		{
-			"expected": { "tokens": ["green"], "match": "set" },
-			"reject_unknown_words": true,
-			"on_wrong": { "npc": ["Huh?", "Answer with a word you've seen."] },
-			"on_success": {
-				"npc": ["Correct.", "Now, ask me for the door code using words you've seen."],
-				"unlock_words": ["door", "code"]
-			}
-		},
-		{
-			"expected": { "tokens": ["door", "code"], "match": "set" },
-			"on_wrong": { "npc": ["That's not it."] },
-			"on_success": {
-				"npc": ["It's 1234."],
-				"unlock_words": ["1234"]
-			}
-		}
-	]
-}
-```
+### Linear Steps (Integrated into `chat`)
+Each dictionary entry inside `chat` is a step defining the acceptable player response. Vocabulary accrues automatically from every displayed NPC line and accepted player input. No explicit unlock arrays.
 
 Authoring tips:
-- Keep `chat_history` short so you don’t over-seed vocabulary.
-- Put facts in `chat_history` and require players to echo keywords back via `steps`.
-- Unlock numeric codes or special terms only after the player asks about them.
-- If you want an exploratory step, set `reject_unknown_words: false` for that step only.
+- Keep pre-step NPC lines tight so players discover words in a controlled order.
+- Phrase success lines to introduce only the next required vocabulary.
+- Use `match: "contains"` when allowing polite extras (e.g., "door code please").
+- Use `allow_unknown: true` sparingly for exploratory discovery moments.
 
 
 ## Extending and Reuse
@@ -365,7 +311,7 @@ Authoring tips:
 	- Ensure `res://assets/ui/contact_card_focus.tres` exists.
 	- Confirm the card’s `set_selected(true)` is being called (handled by `chat_handler.gd` on selection).
 - Avatar not showing:
-	- Check `profile_icon_path` resolves to a `Texture2D` and the resource exists.
+	- Check `icon` resolves to a `Texture2D` and the resource exists.
 - No chats appear:
 	- Ensure your JSON files are in `res://scripts/chats/` and end with `.json`.
 	- Filenames starting with `.` are ignored.
