@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://4cw40mlbo282"]
+[gd_scene load_steps=8 format=3 uid="uid://4cw40mlbo282"]
 
 [ext_resource type="Script" uid="uid://c66xj2shnk6sk" path="res://scripts/contact_card.gd" id="1_krk5g"]
 [ext_resource type="Texture2D" uid="uid://cnsgc7xm8g6tv" path="res://assets/profile_icons/placeholder.png" id="2_2sbup"]
@@ -10,6 +10,13 @@ content_margin_left = 5.0
 content_margin_top = 5.0
 content_margin_right = 5.0
 content_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ansig"]
+bg_color = Color(0.003921569, 0.5254902, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [sub_resource type="FontVariation" id="FontVariation_3md04"]
 base_font = ExtResource("4_uhrrb")
@@ -27,6 +34,14 @@ script = ExtResource("1_krk5g")
 layout_mode = 2
 mouse_filter = 0
 theme_override_constants/separation = 10
+
+[node name="notification" type="Panel" parent="HBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(15, 15)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_ansig")
 
 [node name="Icon" type="TextureRect" parent="HBoxContainer"]
 layout_mode = 2

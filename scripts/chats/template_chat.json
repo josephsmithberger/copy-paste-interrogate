@@ -28,7 +28,7 @@
 	  "fail": "That's not it.",
 	  "allow_unknown": false
 	},
-	"Now form a polite request for access.",
+	"Now please form a polite request for access.",
 	{
 	  "any_of": [
 		{ "expect": "please access", "match": "contains" },

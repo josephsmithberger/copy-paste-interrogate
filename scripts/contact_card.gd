@@ -80,3 +80,12 @@ func _gui_input(event):
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			contact_selected.emit(chat_json_path)
+
+func unread_message():
+	$HBoxContainer/notification.show()
+
+func clear_notifcations():
+	$HBoxContainer/notification.hide()
+
+func clear_notifications():
+	clear_notifcations()

@@ -88,9 +88,17 @@ Step object keys (all optional except one expectation key):
 - `success`: String or array of NPC lines appended on success (these lines also seed vocabulary).
 - `fail`: String or array of NPC lines on mismatch (optional).
 - `allow_unknown`: Bool (default false) — If true, player may introduce unseen words in this step.
+- `notify`: Array of trigger dictionaries fired after a success. Each entry needs a `chat` path (target contact JSON) and `messages` (string or array) to append to that contact.
 
 Automatic Vocabulary Rule:
 All tokens from displayed NPC lines and accepted player inputs become usable immediately in future messages. No manual `unlock` arrays.
+
+Cross-contact notifications:
+- Triggered via the `notify` array on a successful step.
+- The Dialogue Engine automatically loads the target contact (if it hasn't been opened yet), appends the supplied messages, and unlocks their vocabulary.
+- Contact cards use `unread_message()` / `clear_notifications()` to show or clear the badge, and the main window reuses `error_notification.tscn` to pop a toast preview. Opening the chat (or pressing the toast button) clears the unread state.
+- Reference contacts by their JSON path (e.g. `res://scripts/chats/Lucy.json`).
+- Example in practice: `Lucy.json` now pings `Security.json` once the player mentions "security clearance," prompting Security to ask for the safe color.
 
 Example (`scripts/chats/template_chat.json`):
 
@@ -103,7 +111,7 @@ Example (`scripts/chats/template_chat.json`):
 		"Fact: The safe color is green.",
 		"Question: What is the safe color?",
 		{ "expect_tokens": ["green"], "match": "set", "success": ["Correct.", "Now ask me for the door code using words you've seen."], "fail": ["Huh?", "Answer using only known words."] },
-		{ "expect_tokens": ["door", "code"], "match": "set", "success": "It's 1234.", "fail": "That's not it." }
+		{ "expect_tokens": ["door", "code"], "match": "set", "success": "It's 1234.", "fail": "That's not it.", "notify": [{ "chat": "res://scripts/chats/Lucy.json", "messages": "Lucy just texted you about the code." }] }
 	]
 }
 ```
@@ -138,13 +146,13 @@ Example (`scripts/chats/template_chat.json`):
   - `get_chat_history()` → Array of pre-seeded NPC `{ author, text }` dictionaries (only lines before first step).
   - `get_last_message_text()` → String last message or empty.
 - Signals: `chat_loaded`, `chat_failed(error)`.
-
+	- Gameplay simplification: Players can NEVER use words they haven't seen. The former `allow_unknown` flag & free-form unlocking have been removed to reduce noise and keep the puzzle focused.
 ### Reuse in Other UI (e.g., Message Chain)
 - Create a new script that extends the base by path: `extends "res://scripts/chat_json_view.gd"`.
-- Override `_apply_to_ui()` to bind `contact_name`, `profile_texture`, and `chat_history` into your specific node tree (e.g., generate message bubbles).
-- Optionally call `reload_with_path(path)` at runtime to switch conversations.
-
-### Notes
+	- Keep pre-step NPC lines tight so players discover words in a controlled order.
+	- Phrase success lines to introduce only the next required vocabulary.
+	- Use `match: "contains"` when allowing polite extras (e.g., "door code please").
+	- Avoid injecting large batches of new vocabulary at once; gradual trickle is more readable.
 - Paths must be Godot resource paths (e.g. `res://...`).
 - If `icon` is invalid or not a texture, a warning is logged and avatar will be null.
 - Legacy fields (`profile_icon_path`, `chat_history`, `steps`, `unlock_words`, etc.) are no longer supported. Use only `name`, `icon`, and unified `chat` entries (strings + step objects).

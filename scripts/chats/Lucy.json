@@ -24,6 +24,25 @@
 	  "success": "It's 1234.",
 	  "fail": "That's not it.",
 	  "allow_unknown": false
+	},
+	"Ping Security and confirm your clearance.",
+	{
+	  "expect_tokens": ["security", "clearance"],
+	  "match": "contains",
+	  "success": [
+		"Great, they'll reach out shortly.",
+		"Stay sharp."
+	  ],
+	  "fail": "Try mentioning security about the clearance.",
+	  "allow_unknown": false,
+	  "notify": [
+		{
+		  "chat": "res://scripts/chats/Security.json",
+		  "messages": [
+			"Lucy says you're ready. What's the safe color?"
+		  ]
+		}
+	  ]
 	}
   ]
 }
