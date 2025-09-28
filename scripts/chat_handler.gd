@@ -14,6 +14,7 @@ extends ChatJsonView
 
 const NPC_BUBBLE_SCENE_PATH := "res://scenes/npc_message_bubble.tscn"
 const PLAYER_BUBBLE_SCENE_PATH := "res://scenes/user_message_bubble.tscn"
+const DEFAULT_PROFILE_ICON_PATH := "res://assets/profile_icons/placeholder.png"
 
 
 var _npc_bubble_scene: PackedScene
@@ -21,10 +22,10 @@ var _player_bubble_scene: PackedScene
 var _loaded_once: bool = false
 var _bottom_sep: HSeparator
 var _scroll_tween: Tween
-var _notification_popup: Popup
-var _notification_label: Label
-var _notification_button: Button
-var _pending_notification_target: String = ""
+var _notification_widget: Control
+var _error_popup: Popup
+var _error_popup_button: Button
+var _tutorial_popup_shown: bool = false
 
 # Public knobs
 @export var scroll_ease_duration: float = 0.5
@@ -46,28 +47,36 @@ func _ready() -> void:
 	_player_bubble_scene = load(PLAYER_BUBBLE_SCENE_PATH)
 	_connect_existing_contact_cards()
 	_watch_for_new_contact_cards()
-	_setup_notification_popup()
+	_setup_notification_widget()
+	_setup_error_popup()
 	_connect_to_engine()
 	# Disable input until a contact is selected
 	if _message_input:
 		_message_input.editable = false
-		_message_input.placeholder_text = "Select a contact to start"
+		_message_input.placeholder_text = ""
 	# No implicit auto-selection; user must click a contact
 
-func _setup_notification_popup() -> void:
+func _setup_notification_widget() -> void:
 	var scene_root := get_tree().current_scene
 	if scene_root == null:
 		return
-	_notification_popup = scene_root.get_node_or_null("error_notification") as Popup
-	if _notification_popup == null:
+	_notification_widget = scene_root.get_node_or_null("notification") as Control
+	if _notification_widget == null:
 		return
-	_notification_popup.title = "New message"
-	_notification_label = _notification_popup.get_node_or_null("panel/VBoxContainer/Label") as Label
-	_notification_button = _notification_popup.get_node_or_null("panel/VBoxContainer/Button") as Button
-	if _notification_button and not _notification_button.is_connected("pressed", Callable(self, "_on_notification_button_pressed")):
-		_notification_button.pressed.connect(Callable(self, "_on_notification_button_pressed"))
-	if _notification_button:
-		_notification_button.text = "Open chat"
+	if _notification_widget.has_signal("notification_clicked") and not _notification_widget.is_connected("notification_clicked", Callable(self, "_on_notification_clicked")):
+		_notification_widget.connect("notification_clicked", Callable(self, "_on_notification_clicked"))
+
+func _setup_error_popup() -> void:
+	var scene_root := get_tree().current_scene
+	if scene_root == null:
+		return
+	_error_popup = scene_root.get_node_or_null("error_notification") as Popup
+	if _error_popup == null:
+		return
+	_error_popup_button = _error_popup.get_node_or_null("panel/VBoxContainer/Button") as Button
+	if _error_popup_button:
+		if not _error_popup_button.is_connected("pressed", Callable(self, "_on_error_popup_button_pressed")):
+			_error_popup_button.pressed.connect(Callable(self, "_on_error_popup_button_pressed"))
 
 func _connect_to_engine() -> void:
 	var engine := get_node_or_null("/root/DialogueEngine")
@@ -124,7 +133,6 @@ func _on_contact_selected(chat_path: String, card: Node) -> void:
 		return
 	reload_with_path(chat_path)
 	current_contact_path = chat_path
-	_pending_notification_target = ""
 	_current_contact_card = card
 	if _current_contact_card:
 		if _current_contact_card.has_method("clear_notifcations"):
@@ -134,8 +142,7 @@ func _on_contact_selected(chat_path: String, card: Node) -> void:
 	var engine := get_node_or_null("/root/DialogueEngine")
 	if engine:
 		engine.clear_unread(chat_path)
-	if _notification_popup:
-		_notification_popup.hide()
+	_dismiss_notification(chat_path)
 
 	# Visual selection: unselect ALL existing cards via group (more robust than relying only on list hierarchy)
 	for c in get_tree().get_nodes_in_group("contact_cards"):
@@ -310,7 +317,9 @@ func _on_message_text_submitted(new_text: String) -> void:
 	var status := str(res.get("status", ""))
 	match status:
 		"rejected":
-			_show_reject_feedback(res.get("unknown_words", []))
+			var unknown: Array = res.get("unknown_words", [])
+			_show_reject_feedback(unknown)
+			_maybe_show_tutorial_popup(unknown)
 			return
 		"success":
 			_append_player_bubble(text)
@@ -417,18 +426,15 @@ func _on_contact_incoming(contact_path: String, lines: PackedStringArray, _sourc
 				_current_contact_card.clear_notifcations()
 			if _current_contact_card.has_method("clear_notifications"):
 				_current_contact_card.clear_notifications()
+		_dismiss_notification(contact_path)
 		return
-	_pending_notification_target = contact_path
-	if _notification_label:
+	if _notification_widget and _notification_widget.has_method("notification_in"):
 		var contact_display := _get_contact_display_name(contact_path)
 		var trimmed := preview_text
 		if trimmed.length() > 64:
 			trimmed = trimmed.substr(0, 61) + "..."
-		_notification_label.text = "%s: %s" % [contact_display, trimmed]
-	if _notification_button:
-		_notification_button.text = "Open chat"
-	if _notification_popup:
-		_notification_popup.popup_centered_ratio(0.35)
+		var profile_path := _get_contact_profile_path(contact_path)
+		_notification_widget.call("notification_in", profile_path, contact_display, trimmed, contact_path)
 
 func _on_unread_count_changed(contact_path: String, unread: int) -> void:
 	var contact_list := _get_contact_list()
@@ -455,20 +461,52 @@ func _get_contact_display_name(contact_path: String) -> String:
 			return child.get_contact_display_name()
 	return contact_path
 
-func _on_notification_button_pressed() -> void:
-	if _notification_popup:
-		_notification_popup.hide()
-	if _pending_notification_target == "":
+func _maybe_show_tutorial_popup(_unknown_words: Array) -> void:
+	if _tutorial_popup_shown:
 		return
+	if _error_popup == null:
+		return
+	_tutorial_popup_shown = true
+	_error_popup.popup_centered_ratio(0.4)
+
+func _on_error_popup_button_pressed() -> void:
+	if _error_popup == null:
+		return
+	_error_popup.hide()
+	_error_popup.queue_free()
+	_error_popup = null
+	_error_popup_button = null
+
+func _get_contact_profile_path(contact_path: String) -> String:
+	var contact_list := _get_contact_list()
+	if contact_list:
+		for child in contact_list.get_children():
+			if child is ChatJsonView and child.chat_json_path == contact_path:
+				var value := str(child.icon_path)
+				if value != "":
+					return value
+	return DEFAULT_PROFILE_ICON_PATH
+
+func _on_notification_clicked(chat_path: String) -> void:
+	_dismiss_notification()
 	var contact_list := _get_contact_list()
 	if contact_list == null:
-		_pending_notification_target = ""
 		return
 	for child in contact_list.get_children():
-		if child is ChatJsonView and child.chat_json_path == _pending_notification_target:
-			_on_contact_selected(_pending_notification_target, child)
-			break
-	_pending_notification_target = ""
+		if child is ChatJsonView and child.chat_json_path == chat_path:
+			_on_contact_selected(chat_path, child)
+			return
+
+func _dismiss_notification(target_path: String = "") -> void:
+	if _notification_widget == null:
+		return
+	var current_target := ""
+	if _notification_widget.has_method("get_target_chat_path"):
+		current_target = str(_notification_widget.call("get_target_chat_path"))
+	if target_path != "" and current_target != target_path:
+		return
+	if _notification_widget.has_method("notification_out"):
+		_notification_widget.call("notification_out")
 
 func _seed_vocabulary_from_history() -> void:
 	var vocab := get_node_or_null("/root/Vocabulary")
