@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://86c4yi82mspk"]
+[gd_scene load_steps=17 format=3 uid="uid://86c4yi82mspk"]
 
 [ext_resource type="Theme" uid="uid://ylaclft01m8p" path="res://assets/ui/styling.tres" id="1_ax7xg"]
 [ext_resource type="Script" uid="uid://b27qw68lgcnix" path="res://scripts/contact_handler.gd" id="2_exmdq"]
@@ -14,7 +14,7 @@
 content_margin_left = 25.0
 content_margin_top = 10.0
 content_margin_right = 25.0
-bg_color = Color(0.05882353, 0.05882353, 0.05882353, 1)
+bg_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -27,6 +27,22 @@ corner_radius_bottom_right = 35
 corner_radius_bottom_left = 35
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_lr1yk"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qvr6y"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 5.0
+bg_color = Color(0.6, 0.6, 0.6, 0.43137255)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_blend = true
+corner_radius_top_left = 25
+corner_radius_top_right = 25
+corner_radius_bottom_right = 25
+corner_radius_bottom_left = 25
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_exmdq"]
 shader = ExtResource("4_ax7xg")
@@ -45,6 +61,24 @@ colors = PackedColorArray(0, 0, 0, 1)
 gradient = SubResource("Gradient_lp381")
 width = 90
 height = 90
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_c4u0h"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 5.0
+bg_color = Color(0.6, 0.6, 0.6, 0.17254902)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.1882353, 0.1882353, 0.1882353, 1)
+border_blend = true
+corner_radius_top_left = 30
+corner_radius_top_right = 30
+corner_radius_bottom_right = 30
+corner_radius_bottom_left = 30
+shadow_size = 2
 
 [node name="Control" type="Control"]
 layout_mode = 3
@@ -104,8 +138,11 @@ theme_override_styles/separator = SubResource("StyleBoxEmpty_lr1yk")
 custom_minimum_size = Vector2(50, 0)
 layout_mode = 2
 theme = ExtResource("1_ax7xg")
+theme_override_colors/font_color = Color(0.7462125, 0.7462356, 0.7615554, 1)
 theme_override_colors/font_selected_color = Color(0.003921569, 0.5254902, 1, 0.57254905)
+theme_override_colors/font_placeholder_color = Color(0.7864755, 0.786502, 0.7998847, 1)
 theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_qvr6y")
 placeholder_text = "🔍  Search"
 
 [node name="Search_padding2" type="HSeparator" parent="MarginContainer/HSplitContainer/PanelContainer/ScrollContainer/Chatlist"]
@@ -161,11 +198,13 @@ size_flags_horizontal = 4
 theme = ExtResource("1_ax7xg")
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_selected_color = Color(0, 0.41423574, 0.79860514, 0.57254905)
-theme_override_colors/font_placeholder_color = Color(0.59607846, 0.59607846, 0.6156863, 1)
+theme_override_colors/font_placeholder_color = Color(0.72308296, 0.7231039, 0.73940086, 1)
 theme_override_colors/clear_button_color = Color(0.5033745, 0.5033746, 0.5033746, 1)
 theme_override_colors/clear_button_color_pressed = Color(0.6319401, 0.6319462, 0.6509897, 1)
 theme_override_font_sizes/font_size = 30
 theme_override_icons/clear = ExtResource("5_exmdq")
+theme_override_styles/normal = SubResource("StyleBoxFlat_c4u0h")
+theme_override_styles/focus = SubResource("StyleBoxFlat_c4u0h")
 placeholder_text = "iMessage"
 max_length = 50
 keep_editing_on_text_submit = true

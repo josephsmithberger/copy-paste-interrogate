@@ -27,7 +27,7 @@ size_flags_horizontal = 0
 size_flags_vertical = 4
 theme_override_constants/margin_left = 40
 theme_override_constants/margin_top = 22
-theme_override_constants/margin_right = 12
+theme_override_constants/margin_right = 25
 theme_override_constants/margin_bottom = 22
 
 [node name="message" type="RichTextLabel" parent="MarginContainer"]
@@ -35,7 +35,7 @@ layout_mode = 2
 focus_mode = 2
 theme = ExtResource("2_i0r60")
 theme_override_colors/selection_color = Color(0.003921569, 0.5254902, 1, 0.57254905)
-theme_override_font_sizes/normal_font_size = 30
+theme_override_font_sizes/normal_font_size = 40
 text = "Hello, this is a test."
 fit_content = true
 scroll_active = false
