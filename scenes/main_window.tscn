@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://86c4yi82mspk"]
+[gd_scene load_steps=18 format=3 uid="uid://86c4yi82mspk"]
 
 [ext_resource type="Theme" uid="uid://ylaclft01m8p" path="res://assets/ui/styling.tres" id="1_ax7xg"]
 [ext_resource type="Script" uid="uid://b27qw68lgcnix" path="res://scripts/contact_handler.gd" id="2_exmdq"]
@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://drxt0u0y3y1t5" path="res://assets/ui/symbols/Untitled-1.png" id="5_exmdq"]
 [ext_resource type="PackedScene" uid="uid://bi85ytusv3o3r" path="res://scenes/error_notification.tscn" id="6_k1aoa"]
 [ext_resource type="PackedScene" uid="uid://d4flp81kuwska" path="res://scenes/notification.tscn" id="9_c4u0h"]
+[ext_resource type="Script" uid="uid://chkas7saci2s5" path="res://scripts/ui/bouncy_scroll_container.gd" id="10_bounce"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pp484"]
 content_margin_left = 25.0
@@ -121,6 +122,9 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_pp484")
 layout_mode = 2
 follow_focus = true
 horizontal_scroll_mode = 0
+script = ExtResource("10_bounce")
+spring_damping = 12.0
+content_stretch = 0.08
 
 [node name="Chatlist" type="VBoxContainer" parent="MarginContainer/HSplitContainer/PanelContainer/ScrollContainer"]
 layout_mode = 2
@@ -166,6 +170,12 @@ stream = ExtResource("5_c4u0h")
 layout_mode = 2
 follow_focus = true
 horizontal_scroll_mode = 0
+script = ExtResource("10_bounce")
+max_overshoot = 240.0
+drag_resistance = 0.7000000000000001
+spring_stiffness = 120.0
+spring_damping = 12.0
+direction_change_boost = 0.8
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HSplitContainer/ChatView/ScrollContainer"]
 layout_mode = 2
