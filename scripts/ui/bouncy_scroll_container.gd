@@ -1,29 +1,29 @@
 extends ScrollContainer
 class_name BouncyScrollContainer
 
-## A lightweight, iMessage-inspired spring scroll that adds a subtle bounce at the edges.
-## Attach to any ScrollContainer that should feel elastic without heavy tweens.
+## iMessage-inspired elastic scroll with crisp S-curve snap and element wave.
+## Fast initial response, smooth sustain, then rapid snap-back.
 
 @export var enable_vertical: bool = true
 @export var enable_horizontal: bool = false
-@export_range(16.0, 240.0, 1.0) var max_overshoot: float = 84.0
-@export_range(0.05, 1.0, 0.01) var drag_resistance: float = 0.32
-@export_range(120.0, 1200.0, 10.0) var spring_stiffness: float = 620.0
-@export_range(12.0, 160.0, 1.0) var spring_damping: float = 46.0
-@export_range(0.0, 0.08, 0.005) var content_stretch: float = 0.032
-@export var wave_max_children: int = 5
-@export_range(0.1, 0.95, 0.05) var wave_falloff: float = 0.6
-@export_range(0.0, 0.12, 0.005) var wave_strength: float = 0.045
-@export_range(0.0, 120.0, 0.5) var snap_threshold: float = 24.0
-@export_range(0.0, 0.08, 0.005) var in_bounds_stretch: float = 0.018
-@export_range(0.0, 0.08, 0.005) var in_bounds_wave_strength: float = 0.028
-@export_range(120.0, 2400.0, 10.0) var in_bounds_velocity_reference: float = 760.0
-@export_range(0.0, 0.8, 0.05) var direction_change_boost: float = 0.35
+@export_range(16.0, 240.0, 1.0) var max_overshoot: float = 80.0
+@export_range(0.05, 1.0, 0.01) var drag_resistance: float = 0.28
+@export_range(120.0, 1200.0, 10.0) var spring_stiffness: float = 680.0
+@export_range(12.0, 160.0, 1.0) var spring_damping: float = 52.0
+@export_range(0.0, 0.06, 0.002) var content_stretch: float = 0.022
+@export var wave_max_children: int = 6
+@export_range(0.1, 0.95, 0.05) var wave_falloff: float = 0.65
+@export_range(0.0, 0.1, 0.002) var wave_strength: float = 0.035
+@export_range(0.0, 80.0, 0.5) var snap_threshold: float = 18.0
+@export_range(0.0, 0.06, 0.002) var in_bounds_stretch: float = 0.015
+@export_range(0.0, 0.06, 0.002) var in_bounds_wave_strength: float = 0.022
+@export_range(120.0, 2400.0, 10.0) var in_bounds_velocity_reference: float = 820.0
+@export_range(0.0, 0.8, 0.05) var direction_change_boost: float = 0.4
 
-const SPEED_SMOOTHING := 16.0
-const DIRECTION_BOOST_DECAY := 3.8
+const SPEED_SMOOTHING := 18.0
+const DIRECTION_BOOST_DECAY := 4.2
 
-const WHEEL_STEP := 48.0
+const WHEEL_STEP := 52.0
 
 var _content: Control
 var _content_base_scale: Vector2 = Vector2.ONE
@@ -208,26 +208,27 @@ func _apply_axis_drag(delta: float, is_vertical: bool, update_velocity: bool = t
 	var consumed := absf(clamped - prev_value) > 0.05
 	if consumed:
 		if is_vertical:
-			# Blend any lingering overscroll back toward neutral while inside bounds.
-			_overscroll_v = lerpf(_overscroll_v, 0.0, 0.45)
+			# Quick decay of overscroll when scrolling normally (Apple feels responsive).
+			_overscroll_v = lerpf(_overscroll_v, 0.0, 0.55)
 			if absf(_overscroll_v) < 0.1:
 				_overscroll_v = 0.0
 			_velocity_v = 0.0
 			_cancel_snapback(true)
 		else:
-			_overscroll_h = lerpf(_overscroll_h, 0.0, 0.45)
+			_overscroll_h = lerpf(_overscroll_h, 0.0, 0.55)
 			if absf(_overscroll_h) < 0.1:
 				_overscroll_h = 0.0
 			_velocity_h = 0.0
 			_cancel_snapback(false)
 		return true
 
-	# Edge pressure: convert drag delta into elastic offset with increasing resistance.
+	# Progressive resistance: never hard-stop, but exponentially harder to drag further.
 	var current_overscroll := _overscroll_v if is_vertical else _overscroll_h
 	var normalized := 0.0
 	if max_overshoot > 0.0:
 		normalized = absf(current_overscroll) / max_overshoot
-	var resistance := 1.0 + normalized * 2.4
+	# Quadratic resistance curve (Apple's characteristic soft wall).
+	var resistance := 1.0 + (normalized * normalized * 3.2)
 	var applied := (delta * drag_resistance) / resistance
 	var next := current_overscroll + applied
 	next = _soft_limit(next, max_overshoot)
@@ -273,17 +274,22 @@ func _begin_snapback(is_vertical: bool) -> void:
 		_cancel_snapback(true)
 		var magnitude: float = minf(absf(value), max_overshoot)
 		var normalized: float = clampf(magnitude / max_overshoot, 0.0, 1.0)
-		var duration: float = lerpf(0.18, 0.28, normalized)
+		# Apple's S-curve: quick start, sustained middle, snap finish.
+		var duration: float = lerpf(0.24, 0.36, normalized)
 		var property := "_overscroll_v"
 		var overshoot_limit: float = maxf(snap_threshold, 0.001)
-		var overshoot_target: float = -signf(value) * minf(magnitude * 0.42, overshoot_limit)
+		# Reduced overshoot factor for tighter feel (Apple uses minimal reverse bounce).
+		var overshoot_target: float = -signf(value) * minf(magnitude * 0.32, overshoot_limit)
 		var tween := create_tween()
 		tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 		if absf(overshoot_target) > 0.01:
-			tween.tween_property(self, property, overshoot_target, maxf(duration * 0.6, 0.1)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-			tween.tween_property(self, property, 0.0, maxf(duration * 0.55, 0.1)).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+			# Fast out of gate (QUART = x⁴, sharper than SINE).
+			tween.tween_property(self, property, overshoot_target, duration * 0.5).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
+			# Quick snap back (EXPO for rapid finish).
+			tween.tween_property(self, property, 0.0, duration * 0.48).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
 		else:
-			tween.tween_property(self, property, 0.0, maxf(duration, 0.1)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+			# Single phase with CUBIC for smooth S when overshoot is negligible.
+			tween.tween_property(self, property, 0.0, duration).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 		_snap_tween_v = tween
 		_snap_active_v = true
 		_velocity_v = 0.0
@@ -298,17 +304,17 @@ func _begin_snapback(is_vertical: bool) -> void:
 		_cancel_snapback(false)
 		var magnitude_h: float = minf(absf(value_h), max_overshoot)
 		var normalized_h: float = clampf(magnitude_h / max_overshoot, 0.0, 1.0)
-		var duration_h: float = lerpf(0.18, 0.28, normalized_h)
+		var duration_h: float = lerpf(0.24, 0.36, normalized_h)
 		var property_h := "_overscroll_h"
 		var overshoot_limit_h: float = maxf(snap_threshold, 0.001)
-		var overshoot_target_h: float = -signf(value_h) * minf(magnitude_h * 0.42, overshoot_limit_h)
+		var overshoot_target_h: float = -signf(value_h) * minf(magnitude_h * 0.32, overshoot_limit_h)
 		var tween_h := create_tween()
 		tween_h.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 		if absf(overshoot_target_h) > 0.01:
-			tween_h.tween_property(self, property_h, overshoot_target_h, maxf(duration_h * 0.6, 0.1)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-			tween_h.tween_property(self, property_h, 0.0, maxf(duration_h * 0.55, 0.1)).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+			tween_h.tween_property(self, property_h, overshoot_target_h, duration_h * 0.5).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
+			tween_h.tween_property(self, property_h, 0.0, duration_h * 0.48).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
 		else:
-			tween_h.tween_property(self, property_h, 0.0, maxf(duration_h, 0.1)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+			tween_h.tween_property(self, property_h, 0.0, duration_h).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 		_snap_tween_h = tween_h
 		_snap_active_h = true
 		_velocity_h = 0.0
@@ -354,7 +360,8 @@ func _apply_content_stretch() -> void:
 		direction = -signf(_smoothed_scroll_speed_v)
 	if direction == 0.0 and _last_scroll_direction_v != 0:
 		direction = -float(_last_scroll_direction_v)
-	var stretch := clampf(1.0 + (stretch_amount * direction), 0.92, 1.08)
+	# Tighter scale range for subtlety (Apple prefers understated visual feedback).
+	var stretch := clampf(1.0 + (stretch_amount * direction), 0.95, 1.05)
 	_content.pivot_offset = _content.size * 0.5
 	_content.scale = Vector2(_content_base_scale.x, _content_base_scale.y * stretch)
 
@@ -384,7 +391,8 @@ func _apply_child_wave() -> void:
 		var base_scale: Vector2 = _child_base_scales.get(ctrl, ctrl.scale)
 		if applied < wave_max_children:
 			var fall := pow(wave_falloff, float(applied))
-			var scale_factor := clampf(1.0 + (direction * amplitude * fall), 0.92, 1.08)
+			# Tighter scale range (Apple's elements compress subtly, not dramatically).
+			var scale_factor := clampf(1.0 + (direction * amplitude * fall), 0.96, 1.04)
 			ctrl.pivot_offset = ctrl.size * 0.5
 			ctrl.scale = Vector2(base_scale.x, base_scale.y * scale_factor)
 			applied += 1
@@ -428,12 +436,14 @@ func _update_scroll_metrics(delta: float) -> void:
 		_last_scroll_position_v = scroll_vertical
 
 func _soft_limit(value: float, limit: float) -> float:
+	# Apple's rubber-band physics: logarithmic resistance, never a hard stop.
 	if limit <= 0.0:
 		return 0.0
 	var magnitude := absf(value)
-	var cap := limit * 0.96
+	var cap := limit * 0.98
 	if magnitude <= cap:
 		return value
 	var excess := magnitude - cap
-	var softened := cap + (excess / (1.0 + excess))
+	# More aggressive softening curve for tighter feel.
+	var softened := cap + (excess / (1.0 + excess * 1.4))
 	return signf(value) * minf(softened, limit)
