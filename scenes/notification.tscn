@@ -101,7 +101,7 @@ tracks/2/keys = {
 
 [sub_resource type="Animation" id="Animation_8ldpm"]
 resource_name = "out"
-length = 0.5
+length = 0.4
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
@@ -109,7 +109,7 @@ tracks/0/path = NodePath("PanelContainer:position")
 tracks/0/interp = 2
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.5),
+"times": PackedFloat32Array(0, 0.4),
 "transitions": PackedFloat32Array(1, 0.5),
 "update": 0,
 "values": [Vector2(439, 0), Vector2(439, -72)]
@@ -121,7 +121,7 @@ tracks/1/path = NodePath("PanelContainer:scale")
 tracks/1/interp = 2
 tracks/1/loop_wrap = true
 tracks/1/keys = {
-"times": PackedFloat32Array(0, 0.5),
+"times": PackedFloat32Array(0, 0.4),
 "transitions": PackedFloat32Array(1, 0.5),
 "update": 0,
 "values": [Vector2(1, 1), Vector2(0.5, 0.5)]
@@ -151,7 +151,7 @@ anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -137.0
 offset_top = -37.26
-offset_right = 148.0
+offset_right = 248.0
 offset_bottom = 27.740002
 grow_horizontal = 2
 scale = Vector2(0.5, 0.5)
@@ -175,7 +175,7 @@ layout_mode = 2
 text = "Name"
 
 [node name="Message_preview" type="Label" parent="PanelContainer/HBoxContainer/VBoxContainer"]
-custom_minimum_size = Vector2(200, 0)
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 text = "This is the preview."
 autowrap_mode = 3
@@ -184,6 +184,7 @@ autowrap_mode = 3
 libraries = {
 &"": SubResource("AnimationLibrary_tafmc")
 }
+speed_scale = 2.0
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("3_yejxv")

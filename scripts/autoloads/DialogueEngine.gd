@@ -135,7 +135,6 @@ func _process_step_triggers(origin_contact_id: String, step: Dictionary) -> Arra
 	if typeof(raw) != TYPE_ARRAY:
 		return triggered
 	var raw_array: Array = raw
-	var vocab := get_node_or_null("/root/Vocabulary")
 	for entry in raw_array:
 		if typeof(entry) != TYPE_DICTIONARY:
 			continue
@@ -146,15 +145,23 @@ func _process_step_triggers(origin_contact_id: String, step: Dictionary) -> Arra
 		if lines.is_empty():
 			continue
 		_ensure_conversation_loaded(target)
-		for line in lines:
-			_append_history(target, "contact", line)
-			if vocab:
-				vocab.add_words([line])
-		_mark_unread(target, lines.size())
 		var info := {"contact": target, "messages": lines.duplicate(), "source": origin_contact_id}
 		triggered.append(info)
-		emit_signal("contact_incoming", target, lines.duplicate(), origin_contact_id)
+		# Delay the entire notification process by 2-5 seconds to simulate another contact taking time to respond
+		_delayed_notification(target, lines.duplicate(), origin_contact_id)
 	return triggered
+
+func _delayed_notification(target: String, lines: PackedStringArray, source: String) -> void:
+	var delay := randf_range(2.0, 5.0)
+	await get_tree().create_timer(delay).timeout
+	# Now append to history and add vocabulary after the delay
+	var vocab := get_node_or_null("/root/Vocabulary")
+	for line in lines:
+		_append_history(target, "contact", line)
+		if vocab:
+			vocab.add_words([line])
+	_mark_unread(target, lines.size())
+	emit_signal("contact_incoming", target, lines, source)
 
 func _ensure_conversation_loaded(contact_id: String) -> void:
 	if _conversations.has(contact_id):

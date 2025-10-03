@@ -64,7 +64,7 @@ width = 90
 height = 90
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_c4u0h"]
-content_margin_left = 10.0
+content_margin_left = 20.0
 content_margin_top = 10.0
 content_margin_right = 10.0
 content_margin_bottom = 5.0
@@ -123,8 +123,7 @@ layout_mode = 2
 follow_focus = true
 horizontal_scroll_mode = 0
 script = ExtResource("10_bounce")
-spring_damping = 12.0
-content_stretch = 0.08
+drag_resistance = 0.5
 
 [node name="Chatlist" type="VBoxContainer" parent="MarginContainer/HSplitContainer/PanelContainer/ScrollContainer"]
 layout_mode = 2
@@ -171,11 +170,7 @@ layout_mode = 2
 follow_focus = true
 horizontal_scroll_mode = 0
 script = ExtResource("10_bounce")
-max_overshoot = 240.0
-drag_resistance = 0.7000000000000001
-spring_stiffness = 120.0
-spring_damping = 12.0
-direction_change_boost = 0.8
+drag_resistance = 1.0
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HSplitContainer/ChatView/ScrollContainer"]
 layout_mode = 2

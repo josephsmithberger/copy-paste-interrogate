@@ -363,15 +363,21 @@ func _on_message_text_submitted(new_text: String) -> void:
 func _append_player_bubble(text: String) -> void:
 	send_audio.play()
 	_append_bubble(text, true)
+	_scroll_to_bottom_smooth(scroll_ease_duration)
 
 func _append_npc_bubble(text: String) -> void:
 	recieve_audio.play()
 	_append_bubble(text, false)
 
-func _append_npc_messages_with_delay(lines: Array, delay: float = 0.3) -> void:
+func _append_npc_messages_with_delay(lines: Array, _unused_delay: float = 0.3) -> void:
 	for l in lines:
-		await get_tree().create_timer(delay).timeout
-		_append_npc_bubble(str(l))
+		var message_text := str(l)
+		# Calculate delay based on message length: ~15-30ms per character + random 200-600ms base
+		var base_delay := randf_range(0.2, 0.6)
+		var char_delay := message_text.length() * randf_range(0.015, 0.03)
+		var total_delay := minf(base_delay + char_delay, 2.5)  # Cap at 2.5 seconds
+		await get_tree().create_timer(total_delay).timeout
+		_append_npc_bubble(message_text)
 		_scroll_to_bottom_smooth(scroll_ease_duration)
 
 func _append_bubble(text: String, is_player: bool) -> void:

@@ -5,7 +5,22 @@
 - Jam: Xogot Game Jam 2 — Theme: “Liquid Glass”
 - Visual direction: iMessage-inspired UI, aligning with Apple’s new “Liquid Glass” design language.
 - Core concept: Words are keys and items; conversations are the dungeon.
-- Rule: You can’t send words the system hasn’t verified yet — you can only use words you’ve seen from other people.
+- Rule:### Chat view handler: `chat_handler.gd` (res://scripts/chat_handler.gd)
+- Extends: `ChatJsonView` — The chat view itself binds to parsed data after a selection is made.
+- Responsibilities:
+	- Connect to `contact_selected` from contact cards in the `Chatlist` and call `reload_with_path(chat_path)`.
+	- Apply the avatar to its own `Profile_icon`.
+	- Build message bubbles under its own messages container.
+	- Manage scrolling to the bottom after layout updates (smooth tween-based scrolling).
+	- Toggle visual selection on cards (calls each card's `set_selected`) so only the clicked card is focused.
+	- Process player input via `DialogueEngine.process_input()` on message submission.
+	- Show rejection feedback (red flash) when player uses unknown words.
+	- Display tutorial popup on first rejection (`_maybe_show_tutorial_popup()`).
+	- Play audio for sent/received messages.
+	- Connect to `DialogueEngine.contact_incoming` signal to handle cross-contact notifications.
+	- Show toast notifications via `notification.gd` when messages arrive for inactive contacts.
+	- Update contact card last message and unread badges via `DialogueEngine.unread_count_changed` signal.
+	- Seed vocabulary from pre-step history on load (`_seed_vocabulary_from_history()`).’t send words the system hasn’t verified yet — you can only use words you’ve seen from other people.
 - How you unlock words: by chatting with other people (NPC contacts) and asking questions using your current, verified vocabulary. Their replies contain new words which become verified for future use.
 
 Gameplay loop
@@ -86,12 +101,11 @@ Step object keys (all optional except one expectation key):
 - `any_of`: Array of mini step objects (supports alternative expectations).
 - `match`: `"exact" | "set" | "contains"` (defaults: `exact` for `expect`, `set` for `expect_tokens`).
 - `success`: String or array of NPC lines appended on success (these lines also seed vocabulary).
-- `fail`: String or array of NPC lines on mismatch (optional).
-- `allow_unknown`: Bool (default false) — If true, player may introduce unseen words in this step.
+- `fail`: String or array of NPC lines on mismatch (optional; tokens from fail messages are added to vocabulary based on `DialogueEngine.ADD_FAIL_LINE_TOKENS`).
 - `notify`: Array of trigger dictionaries fired after a success. Each entry needs a `chat` path (target contact JSON) and `messages` (string or array) to append to that contact.
 
 Automatic Vocabulary Rule:
-All tokens from displayed NPC lines and accepted player inputs become usable immediately in future messages. No manual `unlock` arrays.
+All tokens from displayed NPC lines and accepted player inputs become usable immediately in future messages. Players can NEVER use words they haven't seen. No manual `unlock` arrays or `allow_unknown` flags.
 
 Cross-contact notifications:
 - Triggered via the `notify` array on a successful step.
@@ -111,7 +125,7 @@ Example (`scripts/chats/template_chat.json`):
 		"Fact: The safe color is green.",
 		"Question: What is the safe color?",
 		{ "expect_tokens": ["green"], "match": "set", "success": ["Correct.", "Now ask me for the door code using words you've seen."], "fail": ["Huh?", "Answer using only known words."] },
-		{ "expect_tokens": ["door", "code"], "match": "set", "success": "It's 1234.", "fail": "That's not it.", "notify": [{ "chat": "res://scripts/chats/Lucy.json", "messages": "Lucy just texted you about the code." }] }
+		{ "expect_tokens": ["door", "code"], "match": "set", "success": "It's 1234.", "fail": "That's not it.", "notify": [{ "chat": "res://scripts/chats/Security.json", "messages": "Security just texted you." }] }
 	]
 }
 ```
@@ -168,6 +182,11 @@ High-level node hierarchies for the provided scenes. This complements the API co
 ```
 Control
 ├─ ColorRect
+├─ notification (Control)                    # Script: scripts/notification.gd (toast popup)
+├─ error_notification (Popup)                 # Tutorial/error popup
+│  └─ panel
+│     └─ VBoxContainer
+│        └─ Button                            # Dismiss button
 └─ MarginContainer
 	└─ HSplitContainer
 		├─ PanelContainer                        # Left panel (contact list)
@@ -180,9 +199,11 @@ Control
 			├─ ScrollContainer
 			│  └─ VBoxContainer                   # Messages root (bubble rows are added here)
 			├─ Fade (ColorRect)                   # Shader-based overlay
+			├─ send_audio (AudioStreamPlayer)     # Sound effect for sending messages
+			├─ recieve_audio (AudioStreamPlayer)  # Sound effect for receiving messages
 			└─ VBoxContainer
 				├─ Profile_icon (TextureRect)      # Avatar set by chat handler
-				└─ Message (LineEdit)              # Input field (presentational for now)
+				└─ Message (LineEdit)              # Input field with text_submitted signal
 ```
 
 Expected node paths used by `chat_handler.gd`:
@@ -195,6 +216,7 @@ Expected node paths used by `chat_handler.gd`:
 ```
 Panel (PanelContainer)                    # Script: scripts/contact_card.gd
 └─ HBoxContainer
+	├─ notification (Control)                # Badge shown when contact has unread messages
 	├─ Icon (TextureRect)
 	└─ VBoxContainer
 		├─ Name (Label)
@@ -240,6 +262,9 @@ Scene/node contracts expected by subclasses are documented below.
 	- `contact_selected(chat_path: String)` — Emitted on left click; `chat_path` equals `chat_json_path`.
 - Methods:
 	- `set_selected(selected: bool)` — Visually marks the card as focused (selected) or default (unselected).
+	- `unread_message()` — Shows the notification badge on the card.
+	- `clear_notifications()` (or `clear_notifcations()` typo variant) — Hides the notification badge.
+	- `refresh_last_message(text_override: String)` — Updates the last message preview text.
 - Selection/focus styling:
 	- Selected: applies `res://assets/ui/contact_card_focus.tres` as the panel style.
 	- Unselected: restores the default panel style (empty) as set in the editor.
@@ -288,13 +313,82 @@ Scene/node contracts expected by subclasses are documented below.
 - Contact list lookup:
 	- Resolves the list node at relative path `../PanelContainer/ScrollContainer/Chatlist` from the ChatView.
 
+### Notification system: `notification.gd` (res://scripts/notification.gd)
+- Scene: `res://scenes/notification.tscn`
+- Purpose: Toast-style popup that appears when messages arrive from contacts not currently open.
+- Script: Attached to a `Control` node in `main_window.tscn` (named `notification`).
+- Signals:
+	- `notification_clicked(chat_path: String)` — Emitted when user clicks the notification; chat_handler uses this to open the contact.
+- Methods:
+	- `notification_in(profile_path: String, contact_name: String, message_preview: String, chat_path: String)` — Shows toast with contact info and message preview.
+	- `notification_out()` — Dismisses the toast with animation.
+	- `get_target_chat_path() -> String` — Returns the chat path associated with current notification.
+- Behavior:
+	- Plays audio (`AudioStreamPlayer`) when notification appears.
+	- Auto-dismisses after `Timer` timeout.
+	- Clicking notification opens the associated contact and clears unread badge.
+- Integration: `chat_handler.gd` connects to `contact_incoming` signal from `DialogueEngine` and calls `notification_in()` when messages arrive for inactive contacts.
+
+### Error/tutorial popup system
+- Scene: `res://scenes/error_notification.tscn`
+- Purpose: One-time tutorial popup that appears when player first tries to use unknown words.
+- Node: `error_notification` (`Popup`) in `main_window.tscn`.
+- Behavior:
+	- `chat_handler.gd` shows this popup via `_maybe_show_tutorial_popup()` on first rejection.
+	- Dismissed via button press; never shown again (`_tutorial_popup_shown` flag).
+	- Explains the core mechanic: "You can only use words you've seen."
+
+### Audio system
+- `chat_handler.gd` includes two audio players:
+	- `send_audio`: Plays when player sends a message (`assets/ui/audio/send.mp3`).
+	- `recieve_audio`: Plays when NPC messages appear (`assets/ui/audio/recieve.mp3`).
+- `notification.gd` includes `AudioStreamPlayer` for notification sound (`assets/ui/audio/notification.mp3`).
+
 ### Scene wiring assumptions
 - `main_window.tscn` contains:
 	- Left panel: `PanelContainer/ScrollContainer/Chatlist` (with `contact_handler.gd` attached to `Chatlist`).
 	- Right panel: `ChatView` (with `chat_handler.gd` attached), which finds and connects to the `Chatlist` at runtime.
-- `contact_card.tscn` root node is a `PanelContainer` with an `HBoxContainer` child holding the icon and text.
+	- Toast notification: `notification` (`Control` with `notification.gd`).
+	- Tutorial popup: `error_notification` (`Popup`).
+- `contact_card.tscn` root node is a `PanelContainer` with an `HBoxContainer` child holding the notification badge, icon, and text.
 
 ---
+
+### Vocabulary Autoload: `Vocabulary.gd` (res://scripts/autoloads/Vocabulary.gd)
+- Purpose: Global singleton that tracks all words the player has seen and can use.
+- Autoload name: `Vocabulary` (accessible via `/root/Vocabulary`)
+- API:
+	- `tokenize(text: String) -> PackedStringArray` — Breaks text into lowercase alphanumeric tokens (allows apostrophes).
+	- `add_words(words: Array) -> void` — Adds new words/phrases to vocabulary (automatically tokenizes).
+	- `contains(word: String) -> bool` — Checks if a single word is in vocabulary.
+	- `has_all(tokens: Array) -> bool` — Checks if all tokens in array are known.
+	- `all_words() -> PackedStringArray` — Returns sorted list of all known words.
+	- `clear_all() -> void` — Resets vocabulary (useful for new game).
+- Signals:
+	- `words_unlocked(new_words: PackedStringArray)` — Emitted when new words are added.
+- Integration: DialogueEngine automatically calls `add_words()` for displayed NPC messages and accepted player inputs.
+
+### Dialogue Engine Autoload: `DialogueEngine.gd` (res://scripts/autoloads/DialogueEngine.gd)
+- Purpose: Manages conversation state, step progression, and vocabulary validation for all contacts.
+- Autoload name: `DialogueEngine` (accessible via `/root/DialogueEngine`)
+- Constants:
+	- `ADD_FAILED_PLAYER_TOKENS := false` — If true, adds tokens from rejected player inputs to vocabulary.
+	- `ADD_FAIL_LINE_TOKENS := true` — If true, adds tokens from step `fail` messages to vocabulary.
+- Key methods:
+	- `load_conversation(contact_id: String, data: Dictionary, force: bool)` — Loads/reloads a contact's chat data.
+	- `process_input(contact_id: String, player_text: String) -> Dictionary` — Validates player input against current step.
+	- `get_history(contact_id: String) -> Array` — Returns full message history for a contact.
+	- `get_unread_count(contact_id: String) -> int` — Returns unread message count.
+	- `clear_unread(contact_id: String) -> void` — Clears unread count for a contact.
+- Signals:
+	- `contact_incoming(contact_id: String, messages: PackedStringArray, source_contact_id: String)` — Fired when a contact sends messages via `notify` trigger.
+	- `unread_count_changed(contact_id: String, unread_count: int)` — Fired when unread count changes.
+- Return format for `process_input()`:
+	- `status`: `"rejected"` (unknown words), `"wrong"` (known words but incorrect), or `"success"`
+	- `unknown_words`: Array of tokens player used that aren't in vocabulary
+	- `npc_messages`: Array of NPC response lines
+	- `step_index`: Current step index after processing
+	- `triggered`: Array of notification triggers that fired
 
 ### Linear Steps (Integrated into `chat`)
 Each dictionary entry inside `chat` is a step defining the acceptable player response. Vocabulary accrues automatically from every displayed NPC line and accepted player input. No explicit unlock arrays.
@@ -303,7 +397,7 @@ Authoring tips:
 - Keep pre-step NPC lines tight so players discover words in a controlled order.
 - Phrase success lines to introduce only the next required vocabulary.
 - Use `match: "contains"` when allowing polite extras (e.g., "door code please").
-- Use `allow_unknown: true` sparingly for exploratory discovery moments.
+- Fail messages can introduce new vocabulary if `DialogueEngine.ADD_FAIL_LINE_TOKENS` is true (default).
 
 
 ## Extending and Reuse
