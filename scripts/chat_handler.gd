@@ -14,6 +14,7 @@ extends ChatJsonView
 
 const NPC_BUBBLE_SCENE_PATH := "res://scenes/npc_message_bubble.tscn"
 const PLAYER_BUBBLE_SCENE_PATH := "res://scenes/user_message_bubble.tscn"
+const TYPING_INDICATOR_SCENE_PATH := "res://assets/ui/typing_message/typing_message.tscn"
 const DEFAULT_PROFILE_ICON_PATH := "res://assets/profile_icons/placeholder.png"
 const BUBBLE_WIDTH_RATIO := 0.75
 const BUBBLE_WIDTH_FALLBACK := 480.0
@@ -23,6 +24,7 @@ const BUBBLE_WIDTH_MAX := 380.0
 
 var _npc_bubble_scene: PackedScene
 var _player_bubble_scene: PackedScene
+var _typing_indicator_scene: PackedScene
 var _loaded_once: bool = false
 var _bottom_sep: HSeparator
 var _scroll_tween: Tween
@@ -30,6 +32,7 @@ var _notification_widget: Control
 var _error_popup: Popup
 var _error_popup_button: Button
 var _tutorial_popup_shown: bool = false
+var _typing_indicator_row: HBoxContainer = null
 
 # Public knobs
 @export var scroll_ease_duration: float = 0.5
@@ -49,6 +52,7 @@ func _ready() -> void:
 	# Do not call super._ready(); we only load when a contact is clicked.
 	_npc_bubble_scene = load(NPC_BUBBLE_SCENE_PATH)
 	_player_bubble_scene = load(PLAYER_BUBBLE_SCENE_PATH)
+	_typing_indicator_scene = load(TYPING_INDICATOR_SCENE_PATH)
 	_connect_existing_contact_cards()
 	_watch_for_new_contact_cards()
 	_setup_notification_widget()
@@ -178,7 +182,7 @@ func _apply_to_ui() -> void:
 	_apply_profile_icon()
 	_rebuild_message_bubbles()
 	_seed_vocabulary_from_history()
-	_defer_scroll_to_bottom()
+	_defer_scroll_to_bottom_instant()  # Use instant scroll when opening contacts
 	_loaded_once = true
 	# Enable input once a chat is loaded
 	if _message_input:
@@ -269,6 +273,10 @@ func _rebuild_message_bubbles() -> void:
 
 func _defer_scroll_to_bottom() -> void:
 	# Ensure layout updates settle over a couple of frames, then scroll
+	call_deferred("_scroll_to_bottom_async")
+
+func _defer_scroll_to_bottom_instant() -> void:
+	# Ensure layout updates settle over a couple of frames, then scroll instantly
 	call_deferred("_scroll_to_bottom_async")
 
 func _scroll_to_bottom() -> void:
@@ -376,7 +384,12 @@ func _append_npc_messages_with_delay(lines: Array, _unused_delay: float = 0.3) -
 		var base_delay := randf_range(0.2, 0.6)
 		var char_delay := message_text.length() * randf_range(0.015, 0.03)
 		var total_delay := minf(base_delay + char_delay, 2.5)  # Cap at 2.5 seconds
+		
+		# Show typing indicator during delay
+		_show_typing_indicator()
 		await get_tree().create_timer(total_delay).timeout
+		_hide_typing_indicator()
+		
 		_append_npc_bubble(message_text)
 		_scroll_to_bottom_smooth(scroll_ease_duration)
 
@@ -435,6 +448,8 @@ func _on_contact_incoming(contact_path: String, lines: PackedStringArray, _sourc
 		preview_text = str(lines[lines.size() - 1])
 	_update_contact_last_message(contact_path, preview_text)
 	if contact_path == current_contact_path and _loaded_once:
+		# If viewing this contact, append messages directly without typing indicator
+		# (typing indicator delay already happened in DialogueEngine)
 		for line in lines:
 			_append_npc_bubble(str(line))
 		_scroll_to_bottom_smooth(scroll_ease_duration)
@@ -455,6 +470,8 @@ func _on_contact_incoming(contact_path: String, lines: PackedStringArray, _sourc
 			trimmed = trimmed.substr(0, 61) + "..."
 		var profile_path := _get_contact_profile_path(contact_path)
 		_notification_widget.call("notification_in", profile_path, contact_display, trimmed, contact_path)
+		# Dim the profile icon while notification is showing
+		_dim_profile_icon()
 
 func _on_unread_count_changed(contact_path: String, unread: int) -> void:
 	var contact_list := _get_contact_list()
@@ -527,6 +544,8 @@ func _dismiss_notification(target_path: String = "") -> void:
 		return
 	if _notification_widget.has_method("notification_out"):
 		_notification_widget.call("notification_out")
+		# Restore profile icon opacity when notification is dismissed
+		_restore_profile_icon()
 
 func _seed_vocabulary_from_history() -> void:
 	var vocab := get_node_or_null("/root/Vocabulary")
@@ -592,3 +611,59 @@ func _show_no_contact_feedback() -> void:
 	tween.tween_property(input, "position", orig_pos, 0.05)
 	await tween.finished
 	input.placeholder_text = orig_placeholder
+
+func _show_typing_indicator() -> void:
+	# Remove existing typing indicator if present
+	_hide_typing_indicator()
+	
+	if _messages_root == null or _typing_indicator_scene == null:
+		return
+	
+	var indicator := _typing_indicator_scene.instantiate()
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_FILL
+	
+	# Store reference to the row so we can remove it later
+	_typing_indicator_row = row
+	
+	# Ensure we insert above the bottom separator if it exists
+	if _bottom_sep and _bottom_sep.get_parent() == _messages_root:
+		_messages_root.add_child(row)
+		_messages_root.move_child(row, _bottom_sep.get_index())
+	else:
+		_messages_root.add_child(row)
+	
+	# Left aligned (like NPC messages)
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(indicator)
+	row.add_child(spacer)
+	
+	if indicator is Control:
+		indicator.size_flags_horizontal = 0
+	
+	# Keep bottom separator as last child
+	if _bottom_sep and _bottom_sep.get_parent() == _messages_root:
+		_messages_root.move_child(_bottom_sep, _messages_root.get_child_count() - 1)
+	
+	# Scroll to show the typing indicator
+	_scroll_to_bottom_smooth(scroll_ease_duration)
+
+func _hide_typing_indicator() -> void:
+	if _typing_indicator_row != null and is_instance_valid(_typing_indicator_row):
+		_typing_indicator_row.queue_free()
+		_typing_indicator_row = null
+
+func _dim_profile_icon() -> void:
+	if _profile_icon == null:
+		return
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(_profile_icon, "modulate:a", 0.5, 0.3)
+
+func _restore_profile_icon() -> void:
+	if _profile_icon == null:
+		return
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(_profile_icon, "modulate:a", 1.0, 0.3)
