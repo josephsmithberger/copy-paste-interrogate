@@ -403,12 +403,24 @@ func _soft_limit(value: float, limit: float) -> float:
 	return signf(value) * minf(softened, limit)
 
 func _has_clickable_at_position(control: Control, pos: Vector2) -> bool:
-	# Recursively check if there's a clickable control at the given position
+	# Recursively check if there's a truly interactive control at the given position
+	# (buttons, text inputs, etc.) but NOT static containers or labels
 	if not control.visible or control.mouse_filter == Control.MOUSE_FILTER_IGNORE:
 		return false
 	
-	# Check if this control can receive input
-	if control.mouse_filter == Control.MOUSE_FILTER_STOP:
+	# Check if this is an actual interactive control that should consume touch events
+	var is_interactive := (
+		control is Button or 
+		control is LineEdit or 
+		control is TextEdit or 
+		control is Slider or 
+		control is SpinBox or
+		control is CheckBox or
+		control is OptionButton or
+		(control.mouse_filter == Control.MOUSE_FILTER_STOP and control.is_in_group("contact_cards"))
+	)
+	
+	if is_interactive:
 		# Check if position is within this control's bounds
 		var local_pos := control.get_local_mouse_position()
 		if Rect2(Vector2.ZERO, control.size).has_point(local_pos):
