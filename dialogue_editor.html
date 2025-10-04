@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Copy-Paste-Interrogate Dialogue Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 40px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+            border-color: #9ca3af;
+        }
+
+        /* Secondary buttons in header (on colored background) */
+        .header .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .header .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-secondary.btn-small {
+            background: #e5e7eb;
+            border: 1px solid #9ca3af;
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        .btn-secondary.btn-small:hover {
+            background: #d1d5db;
+            border-color: #6b7280;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: #f9fafb;
+            border-right: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: #f3f4f6;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .sidebar-header h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #1f2937;
+        }
+
+        .contact-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .contact-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .contact-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+
+        .contact-item.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .contact-item-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .contact-item-path {
+            font-size: 11px;
+            opacity: 0.6;
+        }
+
+        .editor-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .editor-tabs {
+            display: flex;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0 20px;
+        }
+
+        .editor-tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            color: #6b7280;
+            transition: all 0.2s;
+        }
+
+        .editor-tab:hover {
+            color: #667eea;
+        }
+
+        .editor-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .editor-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1f2937;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+        }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-checkbox input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .chat-timeline {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .chat-entry {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .chat-entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .chat-entry-type {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .type-message {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .type-step {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .chat-entry-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #6b7280;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: #f3f4f6;
+            color: #667eea;
+        }
+
+        .chat-entry-content {
+            font-size: 14px;
+            color: #374151;
+            line-height: 1.6;
+        }
+
+        .step-details {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 13px;
+        }
+
+        .step-detail-row {
+            margin-bottom: 8px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .step-detail-label {
+            font-weight: 600;
+            color: #6b7280;
+            min-width: 100px;
+        }
+
+        .step-detail-value {
+            color: #374151;
+        }
+
+        .add-entry-btn {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #d1d5db;
+            background: white;
+            border-radius: 6px;
+            color: #6b7280;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-entry-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+            background: #f9fafb;
+        }
+
+        .json-preview {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .notify-triggers {
+            margin-top: 12px;
+        }
+
+        .notify-item {
+            background: #f9fafb;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .notify-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .validation-warning {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            color: #92400e;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .array-input {
+            margin-top: 8px;
+        }
+
+        .array-item {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .array-item input {
+            flex: 1;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Dialogue Editor</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="app.importJSON()">Import JSON</button>
+                <button class="btn btn-secondary" onclick="app.newContact()">New Contact</button>
+                <button class="btn btn-primary" onclick="app.exportJSON()">Export JSON</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                            <div class="sidebar-header">
+                <h2>Contacts</h2>
+            </div>
+                <div class="contact-list" id="contactList"></div>
+            </div>
+
+            <div class="editor-area">
+                <div class="editor-tabs">
+                    <div class="editor-tab active" data-tab="editor" onclick="app.switchTab('editor')">Editor</div>
+                    <div class="editor-tab" data-tab="json" onclick="app.switchTab('json')">JSON</div>
+                </div>
+
+                <div class="editor-content" id="editorContent">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💬</div>
+                        <h3>No Contact Selected</h3>
+                        <p>Create a new contact or select one from the list to start editing</p>
+                        <button class="btn btn-primary" onclick="app.newContact()">Create New Contact</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing chat entries -->
+    <div class="modal-overlay" id="entryModal">
+        <div class="modal">
+            <h2 id="modalTitle">Edit Entry</h2>
+            <div id="modalContent"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="app.closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="app.saveEntry()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            contacts: [],
+            currentContactId: null,
+            currentTab: 'editor',
+            editingEntry: null,
+            editingEntryIndex: null,
+
+            init() {
+                this.loadFromLocalStorage();
+                this.render();
+            },
+
+            loadFromLocalStorage() {
+                const saved = localStorage.getItem('dialogueEditorData');
+                if (saved) {
+                    try {
+                        this.contacts = JSON.parse(saved);
+                    } catch (e) {
+                        console.error('Failed to load saved data:', e);
+                    }
+                }
+            },
+
+            saveToLocalStorage() {
+                localStorage.setItem('dialogueEditorData', JSON.stringify(this.contacts));
+            },
+
+            newContact() {
+                const id = Date.now().toString();
+                const contact = {
+                    id: id,
+                    name: 'New Contact',
+                    icon: 'res://assets/profile_icons/placeholder.png',
+                    locked: false,
+                    chat: ['Welcome to the chat!']
+                };
+                this.contacts.push(contact);
+                this.currentContactId = id;
+                this.saveToLocalStorage();
+                this.render();
+            },
+
+            selectContact(id) {
+                this.currentContactId = id;
+                this.render();
+            },
+
+            getCurrentContact() {
+                return this.contacts.find(c => c.id === this.currentContactId);
+            },
+
+            updateCurrentContact(updates) {
+                const contact = this.getCurrentContact();
+                if (contact) {
+                    Object.assign(contact, updates);
+                    this.saveToLocalStorage();
+                    this.render();
+                }
+            },
+
+            deleteContact() {
+                if (!confirm('Are you sure you want to delete this contact?')) return;
+                this.contacts = this.contacts.filter(c => c.id !== this.currentContactId);
+                this.currentContactId = null;
+                this.saveToLocalStorage();
+                this.render();
+            },
+
+            switchTab(tab) {
+                this.currentTab = tab;
+                document.querySelectorAll('.editor-tab').forEach(t => {
+                    t.classList.toggle('active', t.dataset.tab === tab);
+                });
+                if (tab === 'editor') {
+                    this.renderEditor();
+                } else if (tab === 'json') {
+                    this.renderJSONEditor();
+                }
+            },
+
+            addChatEntry(type) {
+                const contact = this.getCurrentContact();
+                if (!contact) return;
+
+                if (type === 'message') {
+                    contact.chat.push('New message');
+                } else {
+                    contact.chat.push({
+                        expect_tokens: [],
+                        match: 'set',
+                        success: 'Success message',
+                        fail: 'Try again'
+                    });
+                }
+                this.saveToLocalStorage();
+                this.render();
+            },
+
+            editChatEntry(index) {
+                const contact = this.getCurrentContact();
+                if (!contact) return;
+
+                this.editingEntryIndex = index;
+                this.editingEntry = JSON.parse(JSON.stringify(contact.chat[index]));
+
+                const isMessage = typeof this.editingEntry === 'string';
+                
+                document.getElementById('modalTitle').textContent = isMessage ? 'Edit Message' : 'Edit Step';
+                document.getElementById('modalContent').innerHTML = isMessage ? 
+                    this.renderMessageEditor() : this.renderStepEditor();
+                
+                document.getElementById('entryModal').classList.add('active');
+            },
+
+            deleteChatEntry(index) {
+                if (!confirm('Delete this entry?')) return;
+                const contact = this.getCurrentContact();
+                if (!contact) return;
+                contact.chat.splice(index, 1);
+                this.saveToLocalStorage();
+                this.render();
+            },
+
+            moveChatEntry(index, direction) {
+                const contact = this.getCurrentContact();
+                if (!contact) return;
+                const newIndex = index + direction;
+                if (newIndex < 0 || newIndex >= contact.chat.length) return;
+                [contact.chat[index], contact.chat[newIndex]] = [contact.chat[newIndex], contact.chat[index]];
+                this.saveToLocalStorage();
+                this.render();
+            },
+
+            saveEntry() {
+                const contact = this.getCurrentContact();
+                if (!contact) return;
+
+                const isMessage = typeof this.editingEntry === 'string';
+                
+                if (isMessage) {
+                    const text = document.getElementById('messageText').value;
+                    contact.chat[this.editingEntryIndex] = text;
+                } else {
+                    const step = {
+                        match: document.getElementById('matchType').value
+                    };
+
+                    const expectType = document.getElementById('expectType').value;
+                    if (expectType === 'expect') {
+                        step.expect = document.getElementById('expectValue').value;
+                    } else if (expectType === 'expect_tokens') {
+                        const tokens = document.getElementById('expectTokens').value
+                            .split(',')
+                            .map(t => t.trim())
+                            .filter(t => t);
+                        step.expect_tokens = tokens;
+                    }
+
+                    const successText = document.getElementById('successText').value;
+                    const successLines = successText.split('\n').filter(l => l.trim());
+                    step.success = successLines.length === 1 ? successLines[0] : successLines;
+
+                    const failText = document.getElementById('failText').value;
+                    if (failText.trim()) {
+                        const failLines = failText.split('\n').filter(l => l.trim());
+                        step.fail = failLines.length === 1 ? failLines[0] : failLines;
+                    }
+
+                    step.lock = document.getElementById('lockCheck').checked;
+
+                    // Handle notify triggers
+                    const notifyElements = document.querySelectorAll('.notify-item');
+                    const notifyTriggers = [];
+                    notifyElements.forEach(el => {
+                        const chat = el.querySelector('.notify-chat').value;
+                        const messages = el.querySelector('.notify-messages').value;
+                        if (chat && messages) {
+                            notifyTriggers.push({
+                                chat: chat,
+                                messages: messages.includes('\n') ? messages.split('\n').filter(l => l.trim()) : messages
+                            });
+                        }
+                    });
+                    if (notifyTriggers.length > 0) {
+                        step.notify = notifyTriggers;
+                    }
+
+                    contact.chat[this.editingEntryIndex] = step;
+                }
+
+                this.closeModal();
+                this.saveToLocalStorage();
+                this.render();
+            },
+
+            closeModal() {
+                document.getElementById('entryModal').classList.remove('active');
+                this.editingEntry = null;
+                this.editingEntryIndex = null;
+            },
+
+            renderMessageEditor() {
+                return `
+                    <div class="form-group">
+                        <label class="form-label">Message Text</label>
+                        <textarea class="form-textarea" id="messageText" rows="4">${this.editingEntry}</textarea>
+                    </div>
+                `;
+            },
+
+            renderStepEditor() {
+                const step = this.editingEntry;
+                const expectType = step.expect ? 'expect' : 'expect_tokens';
+                const expectValue = step.expect || '';
+                const expectTokens = step.expect_tokens ? step.expect_tokens.join(', ') : '';
+                const success = Array.isArray(step.success) ? step.success.join('\n') : (step.success || '');
+                const fail = Array.isArray(step.fail) ? step.fail.join('\n') : (step.fail || '');
+                const notify = (step.notify && Array.isArray(step.notify)) ? step.notify : [];
+
+                return `
+                    <div class="form-group">
+                        <label class="form-label">Expectation Type</label>
+                        <select class="form-select" id="expectType" onchange="app.toggleExpectFields()">
+                            <option value="expect_tokens" ${expectType === 'expect_tokens' ? 'selected' : ''}>Expect Tokens (Flexible)</option>
+                            <option value="expect" ${expectType === 'expect' ? 'selected' : ''}>Expect Exact (Strict)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="expectValueGroup" style="display: ${expectType === 'expect' ? 'block' : 'none'}">
+                        <label class="form-label">Exact Phrase</label>
+                        <input type="text" class="form-input" id="expectValue" value="${expectValue}">
+                        <small style="color: #6b7280; font-size: 12px;">Player must type this exact phrase</small>
+                    </div>
+
+                    <div class="form-group" id="expectTokensGroup" style="display: ${expectType === 'expect_tokens' ? 'block' : 'none'}">
+                        <label class="form-label">Expected Tokens (comma-separated)</label>
+                        <input type="text" class="form-input" id="expectTokens" value="${expectTokens}">
+                        <small style="color: #6b7280; font-size: 12px;">e.g., "door, code" - player must use these words</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Match Type</label>
+                        <select class="form-select" id="matchType">
+                            <option value="set" ${step.match === 'set' ? 'selected' : ''}>Set (all tokens, any order)</option>
+                            <option value="contains" ${step.match === 'contains' ? 'selected' : ''}>Contains (has these tokens)</option>
+                            <option value="exact" ${step.match === 'exact' ? 'selected' : ''}>Exact (exact match)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Success Message(s)</label>
+                        <textarea class="form-textarea" id="successText" rows="3">${success}</textarea>
+                        <small style="color: #6b7280; font-size: 12px;">One per line for multiple messages</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Fail Message(s) (optional)</label>
+                        <textarea class="form-textarea" id="failText" rows="2">${fail}</textarea>
+                        <small style="color: #6b7280; font-size: 12px;">Shown when player uses wrong words</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="lockCheck" ${step.lock ? 'checked' : ''}>
+                            <span>Lock conversation after this step</span>
+                        </label>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Notify Triggers</h3>
+                        <small style="color: #6b7280; font-size: 12px; display: block; margin-bottom: 12px;">
+                            Trigger messages to other contacts when this step succeeds
+                        </small>
+                        <div class="notify-triggers" id="notifyTriggers">
+                            ${notify.length > 0 ? notify.map((n, i) => this.renderNotifyItem(n, i)).join('') : ''}
+                        </div>
+                        ${notify.length === 0 ? '<div style="color: #9ca3af; font-size: 13px; padding: 12px; text-align: center; margin-bottom: 12px;">No triggers yet. Click below to add one.</div>' : ''}
+                        <button class="btn btn-secondary btn-small" onclick="app.addNotifyTrigger()">+ Add Trigger</button>
+                    </div>
+                `;
+            },
+
+            renderNotifyItem(notify, index) {
+                const messages = Array.isArray(notify.messages) ? notify.messages.join('\n') : notify.messages;
+                return `
+                    <div class="notify-item">
+                        <div class="notify-item-header">
+                            <strong>Trigger ${index + 1}</strong>
+                            <button class="icon-btn" onclick="app.removeNotifyTrigger(${index})">🗑️</button>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Contact Path</label>
+                            <input type="text" class="form-input notify-chat" value="${notify.chat || ''}" placeholder="res://scripts/chats/ContactName.json">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Messages</label>
+                            <textarea class="form-textarea notify-messages" rows="2">${messages || ''}</textarea>
+                        </div>
+                    </div>
+                `;
+            },
+
+            toggleExpectFields() {
+                const type = document.getElementById('expectType').value;
+                document.getElementById('expectValueGroup').style.display = type === 'expect' ? 'block' : 'none';
+                document.getElementById('expectTokensGroup').style.display = type === 'expect_tokens' ? 'block' : 'none';
+            },
+
+            addNotifyTrigger() {
+                const container = document.getElementById('notifyTriggers');
+                const index = container.querySelectorAll('.notify-item').length;
+                container.insertAdjacentHTML('beforeend', this.renderNotifyItem({chat: '', messages: ''}, index));
+            },
+
+            removeNotifyTrigger(index) {
+                const container = document.getElementById('notifyTriggers');
+                container.children[index].remove();
+                // Re-index remaining items
+                Array.from(container.children).forEach((child, i) => {
+                    child.querySelector('strong').textContent = `Trigger ${i + 1}`;
+                    child.querySelector('.icon-btn').setAttribute('onclick', `app.removeNotifyTrigger(${i})`);
+                });
+            },
+
+            exportJSON() {
+                const contact = this.getCurrentContact();
+                if (!contact) {
+                    alert('Please select a contact to export');
+                    return;
+                }
+
+                const exportData = {
+                    name: contact.name,
+                    icon: contact.icon,
+                    locked: contact.locked,
+                    chat: contact.chat
+                };
+
+                const json = JSON.stringify(exportData, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${contact.name.replace(/\s+/g, '_')}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            },
+
+            importJSON() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const data = JSON.parse(event.target.result);
+                            const id = Date.now().toString();
+                            const newContact = {
+                                id: id,
+                                name: data.name || 'Imported Contact',
+                                icon: data.icon || 'res://assets/profile_icons/placeholder.png',
+                                locked: data.locked || false,
+                                chat: data.chat || []
+                            };
+                            this.contacts.push(newContact);
+                            this.currentContactId = id;
+                            this.saveToLocalStorage();
+                            this.render();
+                            alert(`Successfully imported "${newContact.name}"`);
+                        } catch (error) {
+                            alert('Failed to import JSON: ' + error.message);
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            },
+
+            render() {
+                this.renderContactList();
+                if (this.currentTab === 'editor') {
+                    this.renderEditor();
+                } else if (this.currentTab === 'json') {
+                    this.renderJSONEditor();
+                }
+            },
+
+            renderContactList() {
+                const list = document.getElementById('contactList');
+                if (this.contacts.length === 0) {
+                    list.innerHTML = '<div style="padding: 20px; text-align: center; color: #6b7280; font-size: 14px;">No contacts yet</div>';
+                    return;
+                }
+
+                list.innerHTML = this.contacts.map(contact => `
+                    <div class="contact-item ${contact.id === this.currentContactId ? 'active' : ''}" 
+                         onclick="app.selectContact('${contact.id}')">
+                        <div class="contact-item-name">${contact.name}</div>
+                        <div class="contact-item-path">${contact.chat.length} entries</div>
+                    </div>
+                `).join('');
+            },
+
+            renderEditor() {
+                const contact = this.getCurrentContact();
+                const content = document.getElementById('editorContent');
+
+                if (!contact) {
+                    content.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">💬</div>
+                            <h3>No Contact Selected</h3>
+                            <p>Create a new contact or select one from the list to start editing</p>
+                            <button class="btn btn-primary" onclick="app.newContact()">Create New Contact</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                content.innerHTML = `
+                    <div class="form-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3>Contact Information</h3>
+                            <button class="btn btn-danger btn-small" onclick="app.deleteContact()">Delete Contact</button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-input" value="${contact.name}" 
+                                   onchange="app.updateCurrentContact({name: this.value})">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Icon Path</label>
+                            <input type="text" class="form-input" value="${contact.icon}" 
+                                   onchange="app.updateCurrentContact({icon: this.value})">
+                            <small style="color: #6b7280; font-size: 12px;">e.g., res://assets/profile_icons/placeholder.png</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-checkbox">
+                                <input type="checkbox" ${contact.locked ? 'checked' : ''} 
+                                       onchange="app.updateCurrentContact({locked: this.checked})">
+                                <span>Start locked (must be unlocked via notify trigger)</span>
+                            </label>
+                            <small style="display: block; margin-left: 26px; color: #6b7280; font-size: 12px; margin-top: 4px;">
+                                To lock mid-conversation, use the "Lock conversation after this step" checkbox on individual steps
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Chat Timeline</h3>
+                        <div class="chat-timeline">
+                            ${contact.chat.map((entry, index) => this.renderChatEntry(entry, index)).join('')}
+                            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                <button class="add-entry-btn" style="flex: 1;" onclick="app.addChatEntry('message')">+ Add Message</button>
+                                <button class="add-entry-btn" style="flex: 1;" onclick="app.addChatEntry('step')">+ Add Step</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            renderChatEntry(entry, index) {
+                const isMessage = typeof entry === 'string';
+                const typeClass = isMessage ? 'type-message' : 'type-step';
+                const typeLabel = isMessage ? 'NPC Message' : 'Player Step';
+
+                let content = '';
+                if (isMessage) {
+                    content = `<div class="chat-entry-content">${entry}</div>`;
+                } else {
+                    const expect = entry.expect || (entry.expect_tokens ? entry.expect_tokens.join(', ') : 'none');
+                    const success = Array.isArray(entry.success) ? entry.success.join(' | ') : entry.success;
+                    content = `
+                        <div class="step-details">
+                            <div class="step-detail-row">
+                                <span class="step-detail-label">Expects:</span>
+                                <span class="step-detail-value">${expect}</span>
+                            </div>
+                            <div class="step-detail-row">
+                                <span class="step-detail-label">Match:</span>
+                                <span class="step-detail-value">${entry.match || 'set'}</span>
+                            </div>
+                            <div class="step-detail-row">
+                                <span class="step-detail-label">Success:</span>
+                                <span class="step-detail-value">${success}</span>
+                            </div>
+                            ${entry.lock ? '<div class="step-detail-row"><span class="step-detail-label">🔒 Locks conversation</span></div>' : ''}
+                            ${entry.notify ? `<div class="step-detail-row"><span class="step-detail-label">📬 ${entry.notify.length} notification(s)</span></div>` : ''}
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="chat-entry">
+                        <div class="chat-entry-header">
+                            <span class="chat-entry-type ${typeClass}">${typeLabel}</span>
+                            <div class="chat-entry-actions">
+                                ${index > 0 ? `<button class="icon-btn" onclick="app.moveChatEntry(${index}, -1)" title="Move up">↑</button>` : ''}
+                                ${index < this.getCurrentContact().chat.length - 1 ? `<button class="icon-btn" onclick="app.moveChatEntry(${index}, 1)" title="Move down">↓</button>` : ''}
+                                <button class="icon-btn" onclick="app.editChatEntry(${index})" title="Edit">✏️</button>
+                                <button class="icon-btn" onclick="app.deleteChatEntry(${index})" title="Delete">🗑️</button>
+                            </div>
+                        </div>
+                        ${content}
+                    </div>
+                `;
+            },
+
+            renderJSONEditor() {
+                const contact = this.getCurrentContact();
+                const content = document.getElementById('editorContent');
+
+                if (!contact) {
+                    content.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📄</div>
+                            <h3>No Contact Selected</h3>
+                            <p>Select a contact to view its JSON</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const exportData = {
+                    name: contact.name,
+                    icon: contact.icon,
+                    locked: contact.locked,
+                    chat: contact.chat
+                };
+
+                content.innerHTML = `
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <div>
+                                <h3 style="margin-bottom: 4px;">JSON Editor</h3>
+                                <p style="font-size: 14px; color: #6b7280;">Edit the raw JSON or copy to clipboard</p>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary btn-small" onclick="app.formatJSON()">Format</button>
+                                <button class="btn btn-secondary btn-small" onclick="app.copyJSON()">Copy</button>
+                                <button class="btn btn-success btn-small" onclick="app.saveRawJSON()">Apply Changes</button>
+                            </div>
+                        </div>
+                        <textarea 
+                            id="rawJSONEditor" 
+                            class="form-textarea" 
+                            style="min-height: calc(100vh - 300px); font-family: 'Courier New', monospace; font-size: 13px;"
+                        >${JSON.stringify(exportData, null, 2)}</textarea>
+                    </div>
+                `;
+            },
+
+            copyJSON() {
+                const editor = document.getElementById('rawJSONEditor');
+                if (editor) {
+                    // Copy from the textarea
+                    navigator.clipboard.writeText(editor.value)
+                        .then(() => alert('JSON copied to clipboard!'))
+                        .catch(err => alert('Failed to copy: ' + err));
+                } else {
+                    // Fallback if not in JSON view
+                    const contact = this.getCurrentContact();
+                    if (!contact) return;
+                    const exportData = {
+                        name: contact.name,
+                        icon: contact.icon,
+                        locked: contact.locked,
+                        chat: contact.chat
+                    };
+                    navigator.clipboard.writeText(JSON.stringify(exportData, null, 2))
+                        .then(() => alert('JSON copied to clipboard!'))
+                        .catch(err => alert('Failed to copy: ' + err));
+                }
+            },
+
+
+
+            formatJSON() {
+                const editor = document.getElementById('rawJSONEditor');
+                if (!editor) return;
+                try {
+                    const data = JSON.parse(editor.value);
+                    editor.value = JSON.stringify(data, null, 2);
+                } catch (error) {
+                    alert('Invalid JSON - cannot format: ' + error.message);
+                }
+            },
+
+            saveRawJSON() {
+                const editor = document.getElementById('rawJSONEditor');
+                if (!editor) return;
+                
+                try {
+                    const data = JSON.parse(editor.value);
+                    // Validate required fields
+                    if (!data.name) {
+                        alert('Error: "name" field is required');
+                        return;
+                    }
+                    if (!data.chat || !Array.isArray(data.chat)) {
+                        alert('Error: "chat" field must be an array');
+                        return;
+                    }
+                    
+                    // Update the contact
+                    this.updateCurrentContact({
+                        name: data.name,
+                        icon: data.icon || 'res://assets/profile_icons/placeholder.png',
+                        locked: data.locked || false,
+                        chat: data.chat
+                    });
+                    
+                    alert('Changes applied successfully!');
+                    this.switchTab('editor');
+                } catch (error) {
+                    alert('Invalid JSON: ' + error.message);
+                }
+            }
+        };
+
+        // Initialize app on page load
+        window.addEventListener('DOMContentLoaded', () => app.init());
+
+        // Close modal when clicking outside
+        document.getElementById('entryModal').addEventListener('click', (e) => {
+            if (e.target.id === 'entryModal') {
+                app.closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

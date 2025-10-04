@@ -3,9 +3,12 @@ extends VBoxContainer
 
 const CONTACT_CARD_SCENE_PATH := "res://scenes/contact_card.tscn"
 const CHATS_DIR := "res://scripts/chats"
+const USER_CHATS_DIR := "user://chats"
 
 @onready var _anchor: Node = $Search_padding2
 @onready var _search: LineEdit = $search
+
+var _is_web := OS.has_feature("web")
 
 func _ready() -> void:
 	# Populate list after the scene tree settles
@@ -30,9 +33,20 @@ func _populate_contact_list() -> void:
 		push_error("contact_handler: Failed to load contact card scene: %s" % CONTACT_CARD_SCENE_PATH)
 		return
 
-	var files := DirAccess.get_files_at(CHATS_DIR)
+	# Determine which directory to use
+	var chat_dir := CHATS_DIR
+	if _is_web:
+		# Check if user has imported custom dialogues
+		var user_dir := DirAccess.open(USER_CHATS_DIR)
+		if user_dir != null:
+			var user_files := DirAccess.get_files_at(USER_CHATS_DIR)
+			if not user_files.is_empty():
+				chat_dir = USER_CHATS_DIR
+				print("contact_handler: Using imported dialogues from user:// directory")
+	
+	var files := DirAccess.get_files_at(chat_dir)
 	if files.is_empty():
-		push_warning("contact_handler: No files found in %s" % CHATS_DIR)
+		push_warning("contact_handler: No files found in %s" % chat_dir)
 	files.sort() # Stable order
 
 	# NOTE: Cards add themselves to the 'contact_cards' group in their _ready().
@@ -47,7 +61,7 @@ func _populate_contact_list() -> void:
 			continue
 
 		var card := (card_scene as PackedScene).instantiate()
-		var json_path := CHATS_DIR + "/" + f
+		var json_path := chat_dir + "/" + f
 
 		# Set exported json path on the card's script
 		card.chat_json_path = json_path
@@ -65,9 +79,9 @@ func _populate_contact_list() -> void:
 		added += 1
 
 	if added == 0:
-		push_warning("contact_handler: No JSON chats found in %s" % CHATS_DIR)
+		push_warning("contact_handler: No JSON chats found in %s" % chat_dir)
 	else:
-		print("contact_handler: Added %d chat(s) from %s" % [added, CHATS_DIR])
+		print("contact_handler: Added %d chat(s) from %s" % [added, chat_dir])
 
 	# Apply any existing search text (e.g., if user typed early or restored state)
 	_filter_contacts()

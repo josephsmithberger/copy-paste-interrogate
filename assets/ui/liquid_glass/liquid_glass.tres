@@ -4,7 +4,3 @@
 
 [resource]
 shader = ExtResource("1_mqwbe")
-shader_parameter/rect_size = Vector2(105.1, 16.62)
-shader_parameter/blur_amount = 0.0800000038
-shader_parameter/corner_power = 8.0
-shader_parameter/edge_falloff = 0.0

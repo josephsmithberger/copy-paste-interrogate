@@ -11,12 +11,13 @@ config_version=5
 [application]
 
 config/name="Copy-Paste-Interrogate"
-run/main_scene="uid://86c4yi82mspk"
+run/main_scene="uid://csetq7krkvpro"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
+SceneManager="*res://scripts/autoloads/SceneManager.gd"
 DialogueEngine="*res://scripts/autoloads/DialogueEngine.gd"
 Vocabulary="*res://scripts/autoloads/Vocabulary.gd"
 

@@ -17,6 +17,8 @@ func _ready() -> void:
 	load_chat_from_json()
 
 func load_chat_from_json() -> void:
+	print("ChatJsonView: Loading from path: ", chat_json_path)
+	
 	if chat_json_path.is_empty():
 		var msg := "No chat JSON path set."
 		push_warning("ChatJsonView: %s" % msg)
@@ -25,12 +27,14 @@ func load_chat_from_json() -> void:
 
 	var file := FileAccess.open(chat_json_path, FileAccess.READ)
 	if file == null:
-		var err := "Failed to open chat JSON: %s" % chat_json_path
+		var err := "Failed to open chat JSON: %s (Error: %d)" % [chat_json_path, FileAccess.get_open_error()]
 		push_error("ChatJsonView: %s" % err)
 		emit_signal("chat_failed", err)
 		return
 	var text := file.get_as_text()
 	file.close()
+	
+	print("ChatJsonView: File loaded, length: ", text.length())
 
 	var root: Variant = JSON.parse_string(text)
 	if typeof(root) != TYPE_DICTIONARY:
@@ -63,6 +67,8 @@ func load_chat_from_json() -> void:
 			# Ignore any strings after steps (authors must move them into step.success)
 			if typeof(entry) == TYPE_STRING:
 				push_warning("ChatJsonView: Ignoring NPC line after first step (move into prior step.success)")
+	
+	print("ChatJsonView: Parsed ", chat_history.size(), " pre-step messages")
 
 	# Load texture
 	profile_texture = null

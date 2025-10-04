@@ -1,0 +1,108 @@
+[gd_scene load_steps=8 format=3 uid="uid://csetq7krkvpro"]
+
+[ext_resource type="Script" uid="uid://d0b3es1hr6uvm" path="res://scripts/title_screen.gd" id="1_dc4i4"]
+[ext_resource type="Material" uid="uid://dx6rewylgqbx6" path="res://assets/ui/liquid_glass/liquid_glass.tres" id="1_fgkus"]
+[ext_resource type="Texture2D" uid="uid://bayf68ou81f2j" path="res://assets/ui/user_message_bubble.png" id="2_mgrm8"]
+[ext_resource type="FontFile" uid="uid://boaluht6layu6" path="res://assets/ui/liquid_glass/Inter-VariableFont_opsz,wght.ttf" id="3_dc4i4"]
+[ext_resource type="Texture2D" uid="uid://chcme5ko1j18" path="res://assets/ui/npc_message_bubble.png" id="4_e54dn"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_3yumr"]
+content_margin_left = 30.0
+content_margin_right = 35.0
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_cs5ya"]
+content_margin_left = 35.0
+content_margin_right = 20.0
+
+[node name="title_screen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -9.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_dc4i4")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+material = ExtResource("1_fgkus")
+custom_minimum_size = Vector2(630, 400)
+layout_mode = 0
+offset_left = 326.0
+offset_top = 74.0
+offset_right = 826.0
+offset_bottom = 574.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+
+[node name="Start_game" type="MarginContainer" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="bubble2" type="NinePatchRect" parent="CenterContainer/VBoxContainer/Start_game"]
+layout_mode = 2
+texture = ExtResource("2_mgrm8")
+patch_margin_left = 50
+patch_margin_top = 50
+patch_margin_right = 60
+patch_margin_bottom = 50
+axis_stretch_horizontal = 2
+axis_stretch_vertical = 2
+
+[node name="Label" type="Label" parent="CenterContainer/VBoxContainer/Start_game"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_dc4i4")
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = SubResource("StyleBoxEmpty_3yumr")
+text = "Start Game"
+
+[node name="Dialogue_creator" type="MarginContainer" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="bubble" type="NinePatchRect" parent="CenterContainer/VBoxContainer/Dialogue_creator"]
+layout_mode = 2
+texture = ExtResource("4_e54dn")
+patch_margin_left = 50
+patch_margin_top = 50
+patch_margin_right = 60
+patch_margin_bottom = 50
+axis_stretch_horizontal = 2
+axis_stretch_vertical = 2
+
+[node name="Label" type="Label" parent="CenterContainer/VBoxContainer/Dialogue_creator"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_dc4i4")
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = SubResource("StyleBoxEmpty_cs5ya")
+text = "Dialogue Creator"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
+
+[node name="LinkButton" type="LinkButton" parent="HBoxContainer"]
+layout_mode = 2
+text = "Visit my Portfolio"
+underline = 1
+uri = "https://josephsmithberger.com"
+
+[connection signal="gui_input" from="CenterContainer/VBoxContainer/Start_game" to="." method="_on_start_game_gui_input"]
+[connection signal="gui_input" from="CenterContainer/VBoxContainer/Dialogue_creator" to="." method="_on_dialogue_creator_gui_input"]
