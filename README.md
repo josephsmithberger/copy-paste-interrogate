@@ -15,12 +15,12 @@
 	- Toggle visual selection on cards (calls each card's `set_selected`) so only the clicked card is focused.
 	- Process player input via `DialogueEngine.process_input()` on message submission.
 	- Show rejection feedback (red flash) when player uses unknown words.
-	- Display tutorial popup on first rejection (`_maybe_show_tutorial_popup()`).
+	- Display tutorial popup on first rejection.
 	- Play audio for sent/received messages.
 	- Connect to `DialogueEngine.contact_incoming` signal to handle cross-contact notifications.
 	- Show toast notifications via `notification.gd` when messages arrive for inactive contacts.
 	- Update contact card last message and unread badges via `DialogueEngine.unread_count_changed` signal.
-	- Seed vocabulary from pre-step history on load (`_seed_vocabulary_from_history()`).’t send words the system hasn’t verified yet — you can only use words you’ve seen from other people.
+	- Seed vocabulary from pre-step history on load.’t send words the system hasn’t verified yet — you can only use words you’ve seen from other people.
 - How you unlock words: by chatting with other people (NPC contacts) and asking questions using your current, verified vocabulary. Their replies contain new words which become verified for future use.
 
 Gameplay loop
@@ -91,6 +91,7 @@ Notes:
 Minimal required fields:
 - `name`: String — Contact display name.
 - `icon`: String — Resource path to avatar texture.
+- `locked`: Boolean (optional) — If true, contact starts locked and won't respond to messages until unlocked via `notify` trigger.
 - `chat`: Array — Ordered mix of:
 	- String: NPC (contact) line shown immediately at load (pre-seed vocabulary) until the first step object appears.
 	- Step object: defines a gating expectation for the player's next input.
@@ -102,10 +103,60 @@ Step object keys (all optional except one expectation key):
 - `match`: `"exact" | "set" | "contains"` (defaults: `exact` for `expect`, `set` for `expect_tokens`).
 - `success`: String or array of NPC lines appended on success (these lines also seed vocabulary).
 - `fail`: String or array of NPC lines on mismatch (optional; tokens from fail messages are added to vocabulary based on `DialogueEngine.ADD_FAIL_LINE_TOKENS`).
+- `lock`: Boolean (optional) — If true, locks the conversation after this step succeeds (contact stops responding until unlocked).
 - `notify`: Array of trigger dictionaries fired after a success. Each entry needs a `chat` path (target contact JSON) and `messages` (string or array) to append to that contact.
 
 Automatic Vocabulary Rule:
 All tokens from displayed NPC lines and accepted player inputs become usable immediately in future messages. Players can NEVER use words they haven't seen. No manual `unlock` arrays or `allow_unknown` flags.
+
+### Contact Locking System
+Contacts can be locked to gate story progression and force players to interact with multiple contacts:
+
+**Initial Lock State:**
+- Set `"locked": true` at the root level of the contact's JSON to start them locked.
+- Locked contacts appear in the contact list and can be opened.
+- Pre-step messages (strings before first step) are still visible in locked chats.
+- When player tries to message a locked contact, input silently clears with no response.
+
+**Mid-Conversation Locking:**
+- Add `"lock": true` to any step object to lock the conversation after that step succeeds.
+- The contact will display their success messages, then stop responding to further input.
+- Useful for creating "waiting" states where the player must talk to someone else to progress.
+
+**Unlocking via Notifications:**
+- When a locked contact receives a `notify` trigger from another contact, they automatically unlock.
+- The triggered messages appear after a 2-5 second delay (simulating response time).
+- Once unlocked, the contact can be interacted with normally.
+
+**Example Flow:**
+```json
+// Security.json - starts locked
+{
+  "name": "Security",
+  "locked": true,
+  "chat": [
+    { "expect_tokens": ["green"], "success": "Access granted." }
+  ]
+}
+
+// Lucy.json - locks after triggering Security
+{
+  "name": "Lucy",
+  "chat": [
+    "The safe is green.",
+    {
+      "expect_tokens": ["security"],
+      "success": "I'll contact them for you.",
+      "lock": true,
+      "notify": [{
+        "chat": "res://scripts/chats/Security.json",
+        "messages": "Lucy vouched for you. What's the safe color?"
+      }]
+    }
+  ]
+}
+```
+In this example: Security is initially locked. After mentioning "security" to Lucy, she locks herself and triggers Security. Security unlocks and messages the player. Lucy remains locked until potentially unlocked by another contact.
 
 Cross-contact notifications:
 - Triggered via the `notify` array on a successful step.
@@ -250,7 +301,7 @@ Both bubble scripts size the NinePatch to tightly wrap the text. The chat view a
 These systems add natural, human-like timing and visual feedback to NPC responses and cross-contact notifications.
 
 ### Dynamic Message Delay System
-- **Location**: `chat_handler.gd` → `_append_npc_messages_with_delay()`
+- **Location**: `chat_handler.gd` → `_append_npc_with_delay()`
 - **Purpose**: Makes NPC responses feel more realistic by varying delay based on message length.
 - **How it works**:
 	- Base delay: Random 0.2-0.6 seconds (simulates "thinking" before typing)
@@ -264,7 +315,7 @@ These systems add natural, human-like timing and visual feedback to NPC response
 - **Customization**: Adjust `randf_range(0.2, 0.6)` for base delay and `randf_range(0.015, 0.03)` for typing speed multiplier.
 
 ### Typing Indicator System
-- **Location**: `chat_handler.gd` → `_show_typing_indicator()` / `_hide_typing_indicator()`
+- **Location**: `chat_handler.gd` → `_show_typing()` / `_hide_typing()`
 - **Scene**: `res://assets/ui/typing_message/typing_message.tscn`
 - **Purpose**: Shows animated "..." bubble while NPC is "typing" (during message delay).
 - **How it works**:
@@ -276,7 +327,7 @@ These systems add natural, human-like timing and visual feedback to NPC response
 	- Indicator is wrapped in `HBoxContainer` with spacer for proper alignment
 	- Inserted above bottom separator to maintain scroll position
 	- Automatically triggers smooth scroll to show indicator
-	- Stored in `_typing_indicator_row` variable for cleanup
+	- Stored in `_typing_row` variable for cleanup
 
 ### Cross-Contact Notification Delay
 - **Location**: `DialogueEngine.gd` → `_delayed_notification()`
@@ -293,7 +344,7 @@ These systems add natural, human-like timing and visual feedback to NPC response
 - **Customization**: Adjust `randf_range(2.0, 5.0)` in `_delayed_notification()` to change delay range.
 
 ### Notification Opacity Effect
-- **Location**: `chat_handler.gd` → `_dim_profile_icon()` / `_restore_profile_icon()`
+- **Location**: `chat_handler.gd` → `_dim_icon()` / `_restore_icon()`
 - **Purpose**: Visual feedback that draws attention to incoming notifications from other contacts.
 - **How it works**:
 	- When toast notification appears: Current contact's profile icon fades to 50% opacity over 0.3 seconds
@@ -306,13 +357,13 @@ These systems add natural, human-like timing and visual feedback to NPC response
 - **Implementation**: Tweens the `modulate:a` (alpha) property of `$VBoxContainer/Profile_icon`
 
 ### Scroll Behavior Optimization
-- **Location**: `chat_handler.gd` → `_defer_scroll_to_bottom_instant()` / `_scroll_to_bottom_smooth()`
+- **Location**: `chat_handler.gd` → `_defer_scroll_instant()` / `_scroll_smooth()`
 - **Purpose**: Different scroll behaviors for different contexts.
 - **Modes**:
-	- **Instant scroll** (`_defer_scroll_to_bottom_instant()`): When opening/switching contacts
+	- **Instant scroll** (`_defer_scroll_instant()`): When opening/switching contacts
 		- No animation, jumps directly to bottom after layout settles
 		- Prevents distracting scroll animation during navigation
-	- **Smooth scroll** (`_scroll_to_bottom_smooth()`): When sending/receiving messages
+	- **Smooth scroll** (`_scroll_smooth()`): When sending/receiving messages
 		- 0.5 second tween animation (configurable via `scroll_ease_duration`)
 		- Sine ease out for natural deceleration
 		- Used for player messages, NPC responses, and typing indicator appearance
@@ -444,7 +495,7 @@ Scene/node contracts expected by subclasses are documented below.
 - Integration: DialogueEngine automatically calls `add_words()` for displayed NPC messages and accepted player inputs.
 
 ### Dialogue Engine Autoload: `DialogueEngine.gd` (res://scripts/autoloads/DialogueEngine.gd)
-- Purpose: Manages conversation state, step progression, and vocabulary validation for all contacts.
+- Purpose: Manages conversation state, step progression, vocabulary validation, and contact locking for all contacts.
 - Autoload name: `DialogueEngine` (accessible via `/root/DialogueEngine`)
 - Constants:
 	- `ADD_FAILED_PLAYER_TOKENS := false` — If true, adds tokens from rejected player inputs to vocabulary.
@@ -455,11 +506,13 @@ Scene/node contracts expected by subclasses are documented below.
 	- `get_history(contact_id: String) -> Array` — Returns full message history for a contact.
 	- `get_unread_count(contact_id: String) -> int` — Returns unread message count.
 	- `clear_unread(contact_id: String) -> void` — Clears unread count for a contact.
+	- `is_locked(contact_id: String) -> bool` — Returns whether a contact is currently locked.
 - Signals:
 	- `contact_incoming(contact_id: String, messages: PackedStringArray, source_contact_id: String)` — Fired when a contact sends messages via `notify` trigger.
 	- `unread_count_changed(contact_id: String, unread_count: int)` — Fired when unread count changes.
+	- `lock_state_changed(contact_id: String, is_locked: bool)` — Fired when a contact's lock state changes.
 - Return format for `process_input()`:
-	- `status`: `"rejected"` (unknown words), `"wrong"` (known words but incorrect), or `"success"`
+	- `status`: `"rejected"` (unknown words), `"wrong"` (known words but incorrect), `"locked"` (contact is locked), or `"success"`
 	- `unknown_words`: Array of tokens player used that aren't in vocabulary
 	- `npc_messages`: Array of NPC response lines
 	- `step_index`: Current step index after processing

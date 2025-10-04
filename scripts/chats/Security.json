@@ -1,8 +1,8 @@
 {
   "name": "Security",
   "icon": "res://assets/profile_icons/placeholder.png",
+  "locked": true,
   "chat": [
-	"Lucy vouched for you. Keep it brief.",
 	{
 	  "expect_tokens": ["green"],
 	  "match": "set",
@@ -13,8 +13,7 @@
 	  "fail": [
 		"That's not what she told me.",
         "Try again once you remember the color."
-	  ],
-	  "allow_unknown": false
+	  ]
 	}
   ]
 }

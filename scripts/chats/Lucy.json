@@ -15,15 +15,13 @@
 	  "fail": [
 		"Huh?",
         "Answer with a word you've seen."
-	  ],
-	  "allow_unknown": false
+	  ]
 	},
 	{
 	  "expect_tokens": ["door", "code"],
 	  "match": "set",
 	  "success": "It's 1234.",
-	  "fail": "That's not it.",
-	  "allow_unknown": false
+	  "fail": "That's not it."
 	},
 	"Ping Security and confirm your clearance.",
 	{
@@ -34,7 +32,7 @@
 		"Stay sharp."
 	  ],
 	  "fail": "Try mentioning security about the clearance.",
-	  "allow_unknown": false,
+	  "lock": true,
 	  "notify": [
 		{
 		  "chat": "res://scripts/chats/Security.json",

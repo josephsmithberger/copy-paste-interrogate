@@ -211,19 +211,30 @@ func _on_message_text_submitted(new_text: String) -> void:
 	var res: Dictionary = engine.process_input(chat_json_path, text)
 	var status := str(res.get("status", ""))
 	
-	match status:
-		"rejected":
-			_show_reject_feedback(res.get("unknown_words", []))
-			_show_tutorial_popup()
-		"success", "wrong", _:
-			_append_player_bubble(text)
-			var lines: Array = res.get("npc_messages", ["Huh?"] if status == "_" else [])
-			await _append_npc_with_delay(lines)
-			if lines.size() > 0:
-				_update_contact_preview(chat_json_path, str(lines.back()))
-			if status == "success":
-				_input.clear()
-			_scroll_smooth(scroll_ease_duration)# _try_autoselect_template removed (legacy template loading)
+	# Check if contact is locked first - locked contacts accept any input silently
+	if status == "locked":
+		_append_player_bubble(text)
+		_input.clear()
+		_scroll_smooth(scroll_ease_duration)
+		return
+	
+	# Only block messages with unknown words (for unlocked contacts)
+	if status == "rejected":
+		_show_reject_feedback(res.get("unknown_words", []))
+		_show_tutorial_popup()
+		return
+	
+	# For all other statuses (success, wrong), send the message
+	_append_player_bubble(text)
+	_input.clear()
+	
+	# Get response lines (if any)
+	var lines: Array = res.get("npc_messages", [])
+	if lines.size() > 0:
+		await _append_npc_with_delay(lines)
+		_update_contact_preview(chat_json_path, str(lines.back()))
+	
+	_scroll_smooth(scroll_ease_duration)
 
 func _append_player_bubble(text: String) -> void:
 	send_audio.play()

@@ -2,6 +2,7 @@ extends Node
 
 signal contact_incoming(contact_id: String, messages: PackedStringArray, source_contact_id: String)
 signal unread_count_changed(contact_id: String, unread_count: int)
+signal lock_state_changed(contact_id: String, is_locked: bool)
 
 const STATUS_REJECTED := "rejected"
 const STATUS_WRONG := "wrong"
@@ -10,7 +11,7 @@ const STATUS_SUCCESS := "success"
 const ADD_FAILED_PLAYER_TOKENS := false
 const ADD_FAIL_LINE_TOKENS := true
 
-var _conversations: Dictionary = {} # contact_id -> {steps:Array, index:int}
+var _conversations: Dictionary = {} # contact_id -> {steps:Array, index:int, locked:bool}
 var _history: Dictionary = {}       # contact_id -> Array[ {author,text} ]
 var _chat_sources: Dictionary = {}  # contact_id -> Dictionary (raw JSON root)
 var _unread_counts: Dictionary = {} # contact_id -> int
@@ -20,6 +21,7 @@ func load_conversation(contact_id: String, data: Dictionary, force: bool = false
 		return
 	var steps: Array = []
 	var preseed: Array = []
+	var starts_locked := bool(data.get("locked", false))
 	if data.has("chat") and typeof(data.chat) == TYPE_ARRAY:
 		var encountered_step := false
 		for entry in data.chat:
@@ -29,12 +31,13 @@ func load_conversation(contact_id: String, data: Dictionary, force: bool = false
 				encountered_step = true
 			elif t == TYPE_STRING and not encountered_step:
 				preseed.append({"author": "contact", "text": str(entry)})
-	_conversations[contact_id] = {"steps": steps, "index": 0}
+	_conversations[contact_id] = {"steps": steps, "index": 0, "locked": starts_locked}
 	_history[contact_id] = preseed
 	_chat_sources[contact_id] = data
 	if not _unread_counts.has(contact_id):
 		_unread_counts[contact_id] = 0
 	unread_count_changed.emit(contact_id, int(_unread_counts.get(contact_id, 0)))
+	lock_state_changed.emit(contact_id, starts_locked)
 
 func get_state(contact_id: String) -> Dictionary:
 	return _conversations.get(contact_id, {"steps": [], "index": 0})
@@ -44,6 +47,12 @@ func get_history(contact_id: String) -> Array:
 
 func get_unread_count(contact_id: String) -> int:
 	return int(_unread_counts.get(contact_id, 0))
+
+func is_locked(contact_id: String) -> bool:
+	var convo: Variant = _conversations.get(contact_id, null)
+	if convo != null and typeof(convo) == TYPE_DICTIONARY:
+		return bool(convo.get("locked", false))
+	return false
 
 func clear_unread(contact_id: String) -> void:
 	if not _unread_counts.has(contact_id):
@@ -57,26 +66,30 @@ func process_input(contact_id: String, player_text: String) -> Dictionary:
 	var convo: Variant = _conversations.get(contact_id, null)
 	if convo == null or typeof(convo) != TYPE_DICTIONARY:
 		return _make_result(STATUS_WRONG, [], [], [], 0)
+	
 	var steps: Array = convo.get("steps", [])
 	var idx: int = int(convo.get("index", 0))
 	var vocab := get_node_or_null("/root/Vocabulary")
 	var tokens: PackedStringArray = []
 	if vocab and vocab.has_method("tokenize"):
 		tokens = vocab.tokenize(player_text)
+	
+	# Always check vocabulary first, even for locked contacts
+	var unknown := _unknown_tokens(tokens, vocab)
+	if unknown.size() > 0:
+		return _make_result(STATUS_REJECTED, unknown, [], [], idx)
+	
+	# Check if contact is locked (hasn't been triggered yet)
+	if bool(convo.get("locked", false)):
+		return _make_result("locked", [], [], [], 0)
 
 	if idx >= steps.size():
-		var unknown_after := _unknown_tokens(tokens, vocab)
-		if unknown_after.size() > 0:
-			return _make_result(STATUS_REJECTED, unknown_after, [], [], idx)
 		if vocab:
 			vocab.add_words([player_text])
 		_append_history(contact_id, "player", player_text)
 		return _make_result(STATUS_SUCCESS, [], [], [], idx)
 
 	var step: Dictionary = steps[idx]
-	var unknown := _unknown_tokens(tokens, vocab)
-	if unknown.size() > 0:
-		return _make_result(STATUS_REJECTED, unknown, [], [], idx)
 
 	var matched := _match_step(step, player_text, tokens, vocab)
 	if not matched:
@@ -103,6 +116,10 @@ func process_input(contact_id: String, player_text: String) -> Dictionary:
 	for sl in success_lines:
 		_append_history(contact_id, "contact", sl)
 	convo.index = idx + 1
+	# Check if this step locks the conversation after success
+	if step.has("lock") and bool(step.lock):
+		convo.locked = true
+		lock_state_changed.emit(contact_id, true)
 	_conversations[contact_id] = convo
 	var triggered := _process_step_triggers(contact_id, step)
 	return _make_result(STATUS_SUCCESS, [], success_lines, [], convo.index, triggered)
@@ -121,7 +138,7 @@ func _unknown_tokens(tokens: PackedStringArray, vocab: Node) -> PackedStringArra
 
 func _normalize_step(step: Dictionary) -> Dictionary:
 	var cleaned: Dictionary = {}
-	var keys := ["expect", "expect_tokens", "any_of", "match", "success", "fail", "notify"]
+	var keys := ["expect", "expect_tokens", "any_of", "match", "success", "fail", "notify", "lock"]
 	for k in keys:
 		if step.has(k):
 			cleaned[k] = step[k]
@@ -154,6 +171,13 @@ func _process_step_triggers(origin_contact_id: String, step: Dictionary) -> Arra
 func _delayed_notification(target: String, lines: PackedStringArray, source: String) -> void:
 	var delay := randf_range(2.0, 5.0)
 	await get_tree().create_timer(delay).timeout
+	# Unlock the contact if they were locked
+	var convo: Variant = _conversations.get(target, null)
+	if convo != null and typeof(convo) == TYPE_DICTIONARY:
+		if bool(convo.get("locked", false)):
+			convo.locked = false
+			_conversations[target] = convo
+			lock_state_changed.emit(target, false)
 	# Now append to history and add vocabulary after the delay
 	var vocab := get_node_or_null("/root/Vocabulary")
 	for line in lines:
