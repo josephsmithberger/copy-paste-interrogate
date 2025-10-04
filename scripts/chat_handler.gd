@@ -474,6 +474,11 @@ func _show_typing() -> void:
 	else:
 		_messages.add_child(row)
 	
+	# Add left margin spacer for typing indicator
+	var left_margin := Control.new()
+	left_margin.custom_minimum_size = Vector2(20, 0)
+	row.add_child(left_margin)
+	
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(indicator)

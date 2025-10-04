@@ -19,6 +19,8 @@ class_name BouncyScrollContainer
 const SPEED_SMOOTHING := 18.0
 const DIRECTION_BOOST_DECAY := 4.2
 const WHEEL_STEP := 52.0
+const WEB_WHEEL_MULTIPLIER := 0.3
+const WEB_PAN_MULTIPLIER := 0.4
 
 var _content: Control
 var _content_base_scale := Vector2.ONE
@@ -39,8 +41,10 @@ var _last_scroll_position_v := 0.0
 var _smoothed_scroll_speed_v := 0.0
 var _last_scroll_direction_v := 0
 var _direction_boost_v := 0.0
+var _is_web := false
 
 func _ready() -> void:
+	_is_web = OS.get_name() == "Web"
 	set_physics_process(true)
 	call_deferred("_setup_content")
 	get_v_scroll_bar().value_changed.connect(_apply_offsets)
@@ -90,6 +94,11 @@ func _physics_process(delta: float) -> void:
 		if enable_horizontal and not _snap_active_h and absf(_overscroll_h) > 0.01:
 			_overscroll_h = lerpf(_overscroll_h, 0.0, return_rate)
 			_velocity_h = 0.0
+	
+	# Force horizontal overscroll to zero if horizontal scrolling is disabled
+	if not enable_horizontal and absf(_overscroll_h) > 0.01:
+		_overscroll_h = 0.0
+		_velocity_h = 0.0
 	
 	_apply_offsets()
 
@@ -146,17 +155,31 @@ func _handle_pointer_delta(delta: Vector2) -> void:
 	if enable_vertical: handled = _apply_axis_drag(delta.y, true) or handled
 	if enable_horizontal: handled = _apply_axis_drag(delta.x, false) or handled
 	if not handled:
-		scroll_vertical -= int(delta.y)
-		scroll_horizontal -= int(delta.x)
+		if enable_vertical:
+			scroll_vertical -= int(delta.y)
+		if enable_horizontal:
+			scroll_horizontal -= int(delta.x)
 
 func _handle_pan_delta(delta: Vector2) -> bool:
+	var adjusted_delta := delta
+	if _is_web:
+		adjusted_delta *= WEB_PAN_MULTIPLIER
 	var handled := false
-	if enable_vertical: handled = _apply_axis_drag(delta.y, true) or handled
-	if enable_horizontal: handled = _apply_axis_drag(delta.x, false) or handled
+	# Only process the axis that is enabled
+	if enable_vertical: 
+		handled = _apply_axis_drag(adjusted_delta.y, true) or handled
+	if enable_horizontal: 
+		handled = _apply_axis_drag(adjusted_delta.x, false) or handled
+	# If horizontal is disabled, ignore horizontal pan completely
+	elif absf(adjusted_delta.x) > absf(adjusted_delta.y):
+		# This is primarily a horizontal pan gesture, so reject it
+		return false
 	return handled
 
 func _handle_mouse_wheel(event: InputEventMouseButton) -> bool:
 	var step := WHEEL_STEP * maxf(1.0, absf(event.factor))
+	if _is_web:
+		step *= WEB_WHEEL_MULTIPLIER
 	match event.button_index:
 		MOUSE_BUTTON_WHEEL_UP: return _apply_axis_drag(step, true, false)
 		MOUSE_BUTTON_WHEEL_DOWN: return _apply_axis_drag(-step, true, false)
@@ -274,7 +297,9 @@ func _on_snap_finished(is_vertical: bool) -> void:
 
 func _apply_offsets(_val: float = 0.0) -> void:
 	if not _content: return
-	_content.position = Vector2(-scroll_horizontal + _overscroll_h, -scroll_vertical + _overscroll_v)
+	var x_offset := -scroll_horizontal + _overscroll_h if enable_horizontal else 0.0
+	var y_offset := -scroll_vertical + _overscroll_v
+	_content.position = Vector2(x_offset, y_offset)
 	_apply_content_stretch()
 	_apply_child_wave()
 
