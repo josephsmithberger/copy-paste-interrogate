@@ -656,6 +656,10 @@
                 if (!contact) return;
 
                 if (type === 'message') {
+                    const hasSteps = contact.chat.some(entry => typeof entry !== 'string');
+                    if (hasSteps) {
+                        return;
+                    }
                     contact.chat.push('New message');
                 } else {
                     contact.chat.push({
@@ -823,7 +827,10 @@
                     <div class="form-group">
                         <label class="form-label">Success Message(s)</label>
                         <textarea class="form-textarea" id="successText" rows="3">${success}</textarea>
-                        <small style="color: #6b7280; font-size: 12px;">One per line for multiple messages</small>
+                        <small style="color: #6b7280; font-size: 12px;">One per line for multiple messages. Use the button below to insert a new line.</small>
+                        <div style="margin-top: 8px;">
+                            <button type="button" class="btn btn-secondary btn-small" onclick="app.addSuccessLine()">+ Add another success line</button>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -893,6 +900,38 @@
                     child.querySelector('strong').textContent = `Trigger ${i + 1}`;
                     child.querySelector('.icon-btn').setAttribute('onclick', `app.removeNotifyTrigger(${i})`);
                 });
+            },
+
+            addSuccessLine() {
+                const textarea = document.getElementById('successText');
+                if (!textarea) return;
+                const needsNewline = textarea.value.length > 0 && !textarea.value.endsWith('\n');
+                textarea.value = textarea.value + (needsNewline ? '\n' : '');
+                textarea.focus();
+                textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+            },
+
+            attachMessageToPreviousStep(index) {
+                const contact = this.getCurrentContact();
+                if (!contact) return;
+                if (index <= 0) return;
+                const messageEntry = contact.chat[index];
+                const previousEntry = contact.chat[index - 1];
+                if (typeof messageEntry !== 'string' || typeof previousEntry === 'string') {
+                    return;
+                }
+                let success = previousEntry.success;
+                if (success === undefined || success === null || success === '') {
+                    success = [];
+                }
+                if (!Array.isArray(success)) {
+                    success = success !== '' ? [success] : [];
+                }
+                success.push(messageEntry);
+                previousEntry.success = success;
+                contact.chat.splice(index, 1);
+                this.saveToLocalStorage();
+                this.render();
             },
 
             exportJSON() {
@@ -994,6 +1033,8 @@
                     return;
                 }
 
+                const hasSteps = contact.chat.some(entry => typeof entry !== 'string');
+
                 content.innerHTML = `
                     <div class="form-section">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -1028,10 +1069,19 @@
 
                     <div class="form-section">
                         <h3>Chat Timeline</h3>
+                        ${hasSteps ? `
+                        <div class="validation-warning" style="margin-bottom: 16px;">
+                            <strong>⚠️ Important:</strong> NPC messages can only appear <strong>before</strong> any player steps (at the top).
+                            To send multiple messages after a step succeeds, edit the step and add them to "Success Message(s)" (one per line) or use the attach button below.
+                        </div>` : ''}
                         <div class="chat-timeline">
                             ${contact.chat.map((entry, index) => this.renderChatEntry(entry, index)).join('')}
                             <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                ${hasSteps ? `
+                                <button class="add-entry-btn" style="flex: 1; opacity: 0.55; cursor: not-allowed;" disabled title="Add extra NPC lines by editing a step and using its Success Message(s) field.">+ Add Message</button>
+                                ` : `
                                 <button class="add-entry-btn" style="flex: 1;" onclick="app.addChatEntry('message')">+ Add Message</button>
+                                `}
                                 <button class="add-entry-btn" style="flex: 1;" onclick="app.addChatEntry('step')">+ Add Step</button>
                             </div>
                         </div>
@@ -1043,10 +1093,20 @@
                 const isMessage = typeof entry === 'string';
                 const typeClass = isMessage ? 'type-message' : 'type-step';
                 const typeLabel = isMessage ? 'NPC Message' : 'Player Step';
+                const contact = this.getCurrentContact();
+                const entries = contact ? contact.chat : [];
+                const prevIsStep = isMessage && index > 0 && typeof entries[index - 1] !== 'string';
 
                 let content = '';
                 if (isMessage) {
                     content = `<div class="chat-entry-content">${entry}</div>`;
+                    if (prevIsStep) {
+                        content += `
+                            <div class="validation-warning" style="margin-top: 10px; font-size: 12px;">
+                                This line won't appear in-game because it comes after a player step. Attach it to the previous step's success messages instead.
+                            </div>
+                        `;
+                    }
                 } else {
                     const expect = entry.expect || (entry.expect_tokens ? entry.expect_tokens.join(', ') : 'none');
                     const success = Array.isArray(entry.success) ? entry.success.join(' | ') : entry.success;
@@ -1077,6 +1137,7 @@
                             <div class="chat-entry-actions">
                                 ${index > 0 ? `<button class="icon-btn" onclick="app.moveChatEntry(${index}, -1)" title="Move up">↑</button>` : ''}
                                 ${index < this.getCurrentContact().chat.length - 1 ? `<button class="icon-btn" onclick="app.moveChatEntry(${index}, 1)" title="Move down">↓</button>` : ''}
+                                ${prevIsStep ? `<button class="icon-btn" onclick="app.attachMessageToPreviousStep(${index})" title="Attach to previous step success">📎</button>` : ''}
                                 <button class="icon-btn" onclick="app.editChatEntry(${index})" title="Edit">✏️</button>
                                 <button class="icon-btn" onclick="app.deleteChatEntry(${index})" title="Delete">🗑️</button>
                             </div>

@@ -1,0 +1,51 @@
+{
+  "name": "Hacker",
+  "icon": "res://assets/profile_icons/placeholder.png",
+  "locked": false,
+  "chat": [
+	"Hello.",
+	{
+	  "match": "set",
+	  "expect_tokens": [
+        "hello"
+	  ],
+	  "success": [
+		"1've d0ne the imp0ssible - h4cked y0ur Ip4d. 4nd w0rse, 1've g0tten 4ccess t0 y0ur pl4ns f0r Ul styl1ng 0n 4pple Dev1ces, \"L1quid Gl4ss\". Alert y0ur c0w0rkers bef0re 1 le4k 1t t0 the publ1c.",
+		"Y0u m4y be th1nk1ng, \"Why g1ve y0u the ch4nce?\" we1l, 1'm k1nd 0f sad1st1c 4nd w0uld l1ke t0 see 1f y0u c4n bre4k 0ut. Y0u'll n0t1ce y0u c4n 0nly use w0rds fr0m 0ther pe0ple. K1nd 0f a s0c1al eng1neer1ng game. N0w g0, bef0re 1t's t00 l4te.",
+        "wa1t, 1 supp0se a tut0r1al w0uld bE g00d - s0 y0u're n0t t0tally helpless. use th3 un-0bstructed w0rds h1dden 1n mY te%ts & resp0nd w1th th3m."
+	  ],
+	  "lock": false
+	},
+	{
+	  "match": "contains",
+	  "expect_tokens": [
+		"see",
+        "alert"
+	  ],
+	  "success": "y0u d1d 1t. d0n't get t0o c0nf1dent, th0ugh. y0ur j0b 4nd reput4t10n 4re 0n the l1ne.",
+	  "fail": "y0u m1ght've m1ssed s0me..",
+	  "lock": false,
+	  "notify": [
+		{
+		  "chat": "res://scripts/chats/Lucy.json",
+		  "messages": "Hey, is everything ok? Why have you not been picking up your phone? I'm starting to get worried — please answer, the Keynote is tomorrow!"
+		}
+	  ]
+	},
+	{
+	  "match": "set",
+	  "expect_tokens": [
+        "liquid"
+	  ],
+	  "success": [
+		"Yup - there it is. now the translucent bit.",
+		"Think of the ramifications of me leaking this!",
+		"Heck- android might be able to cobble a copy together",
+		"You're so close yet so far..",
+        "Try mentioning the \"event\" to someone..."
+	  ],
+	  "fail": "Try again",
+	  "lock": false
+	}
+  ]
+}

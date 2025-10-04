@@ -1,0 +1,80 @@
+{
+  "name": "IT",
+  "icon": "res://assets/profile_icons/placeholder.png",
+  "locked": true,
+  "chat": [
+	{
+	  "any_of": [
+		{
+		  "match": "set",
+		  "expect_tokens": ["ok"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["yes"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["proceed"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["sure"]
+		}
+	  ],
+	  "success": [
+		"Processing...",
+        "Questionnaire: Text the device type."
+	  ],
+	  "fail": "Unrecognized response",
+	  "lock": false
+	},
+	{
+	  "match": "set",
+	  "expect_tokens": [
+        "iPad"
+	  ],
+	  "success": [
+		"Recognized device type: Yes",
+        "What is the issue:"
+	  ],
+	  "fail": "Error",
+	  "lock": false,
+	  "notify": [
+		{
+		  "chat": "res://scripts/chats/Lucy.json",
+		  "messages": "Is it working? I hope I filled it out right."
+		}
+	  ]
+	},
+	{
+	  "match": "set",
+	  "expect_tokens": [
+        "hacked"
+	  ],
+	  "success": "Immediate actions will be taken. Confirm with your digital signature.",
+	  "fail": "Unrecognized input",
+	  "lock": false
+	},
+	{
+	  "match": "set",
+	  "expect": "Andrea Apple",
+	  "success": [
+		"We've processed your message.",
+        "We are now escalating your ticket - your manager should reach out shortly."
+	  ],
+	  "fail": "Full name please.",
+	  "lock": false,
+	  "notify": [
+		{
+		  "chat": "res://scripts/chats/Hacker.json",
+		  "messages": "Oh shit - they got your manager involved!"
+		},
+		{
+		  "chat": "res://scripts/chats/dog_walker.json",
+		  "messages": "I just checked - they're not poisonous. But I made a discovery. Let me know if you can chat."
+		}
+	  ]
+	}
+  ]
+}

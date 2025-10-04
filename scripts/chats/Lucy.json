@@ -1,54 +1,146 @@
 {
-	"name": "Lucy",
-	"icon": "res://assets/profile_icons/placeholder.png",
-	"chat": [
-		"Welcome. Read carefully and answer using only words you've seen.",
-		"Fact: The safe color is green.",
-		"Question: What is the safe color?",
+  "name": "Lucy (work)",
+  "icon": "res://assets/profile_icons/placeholder.png",
+  "locked": true,
+  "chat": [
+	{
+	  "match": "set",
+	  "expect_tokens": [
+		"not",
+        "ok"
+	  ],
+	  "success": "Is our connection broken?? What's wrong?",
+	  "fail": "huh",
+	  "lock": false
+	},
+	{
+	  "match": "set",
+	  "expect_tokens": [
+		"phone",
+        "broken"
+	  ],
+	  "success": "Oh your iPad? Yikes, sorry about that. Want me to fill out a IT ticket for you?",
+	  "fail": "??",
+	  "lock": false
+	},
+	{
+	  "any_of": [
 		{
-			"expect_tokens": [
-				"green"
-			],
-			"match": "set",
-			"success": [
-				"Correct.",
-				"Now, ask me for the door code using words you've seen."
-			],
-			"fail": [
-				"Huh?",
-				"Answer with a word you've seen."
-			]
+		  "match": "set",
+		  "expect_tokens": ["ok"]
 		},
 		{
-			"expect_tokens": [
-				"door",
-				"code"
-			],
-			"match": "set",
-			"success": "It's 1234.",
-			"fail": "That's not it."
+		  "match": "set",
+		  "expect_tokens": ["yes"]
 		},
-		"Ping Security and confirm your clearance.",
 		{
-			"expect_tokens": [
-				"security",
-				"clearance"
-			],
-			"match": "contains",
-			"success": [
-				"Great, they'll reach out shortly.",
-				"Stay sharp."
-			],
-			"fail": "Try mentioning security about the clearance.",
-			"lock": true,
-			"notify": [
-				{
-					"chat": "res://scripts/chats/Security.json",
-					"messages": [
-						"Lucy says you're ready. What's the safe color?"
-					]
-				}
-			]
+		  "match": "set",
+		  "expect_tokens": ["sure"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["please"]
 		}
-	]
+	  ],
+	  "success": "Alright, it's automated so you should get a response any moment.",
+	  "fail": "I need confirmation.",
+	  "lock": false,
+	  "notify": [
+		{
+		  "chat": "res://scripts/chats/IT.json",
+		  "messages": "IT ticket automation. Lucy (Employee #: 8921) has started a ticket for you. Would you like to proceed?"
+		}
+	  ]
+	},
+	{
+	  "any_of": [
+		{
+		  "match": "set",
+		  "expect_tokens": ["yes"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["ok"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["sure"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["yeah"]
+		}
+	  ],
+	  "success": [
+		"Great! Sorry I called you so many times, that must've been annoying. Hopefully we can get this cleared up before the reveal tomorrow.. ",
+        "By the way what's wrong with your iPad? Are you not able to type or something?"
+	  ],
+	  "lock": false,
+	  "notify": [
+		{
+		  "chat": "res://scripts/chats/dog_walker.json",
+		  "messages": [
+			"Hey Andrea, sorry Winnie wasn't up to the walk yesterday. Is she feeling any better today? I've never heard a dog hack and cough like that. ",
+            "I gave her an apple yesterday, those aren't poisonous to dogs.. right?"
+		  ]
+		}
+	  ]
+	},
+	{
+	  "match": "set",
+	  "expect_tokens": [
+        "hack"
+	  ],
+	  "success": "Oh damn, it was hacked?! All of our plans are on there.",
+	  "fail": "?",
+	  "lock": false,
+	  "notify": [
+		{
+		  "chat": "res://scripts/chats/Hacker.json",
+		  "messages": [
+			"You've already unlocked the word for your last name.. I'll give you a riddle: His name is Tim Cook but many call him Tim .... ",
+            "That is your last name."
+		  ]
+		}
+	  ]
+	},
+	{
+	  "match": "set",
+	  "expect_tokens": [
+        "event"
+	  ],
+	  "success": [
+		"Yes - the event is tomorrow! Any updates? ",
+        "You seem limited in your texting, can you at least tell me if your IT ticket got a response?"
+	  ],
+	  "lock": false
+	},
+	{
+	  "any_of": [
+		{
+		  "match": "set",
+		  "expect_tokens": ["yes"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["yeah"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["ok"]
+		}
+	  ],
+	  "success": [
+		"They did?! Great- hopefully this get's ironed out.",
+        "The world is not ready for the fluidity of our design."
+	  ],
+	  "lock": false,
+	  "notify": [
+		{
+		  "chat": "res://scripts/chats/dog_walker.json",
+		  "messages": "Can you try pouring some liquid down her throat? This is freaking me out and I feel liable"
+		}
+	  ]
+	}
+  ]
 }
