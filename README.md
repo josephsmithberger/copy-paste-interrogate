@@ -146,11 +146,11 @@ Contacts can be locked to gate story progression and force players to interact w
     "The safe is green.",
     {
       "expect_tokens": ["security"],
-      "success": "I'll contact them for you.",
-      "lock": true,
-      "notify": [{
-        "chat": "res://scripts/chats/Security.json",
-        "messages": "Lucy vouched for you. What's the safe color?"
+	  "success": "I'll contact them for you.",
+	  "lock": true,
+	  "notify": [{
+		"chat": "res://scripts/chats/Security.json",
+		"messages": "Lucy vouched for you. What's the safe color?"
       }]
     }
   ]

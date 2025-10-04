@@ -33,17 +33,12 @@ var _current_card: Node
 @onready var recieve_audio: AudioStreamPlayer = $recieve_audio
 
 func _ready() -> void:
-	print("chat_handler: Initializing")
 	_debug_log("chat_handler initializing...")
 	
 	_npc_bubble = load(NPC_BUBBLE_SCENE)
 	_player_bubble = load(PLAYER_BUBBLE_SCENE)
 	_typing_indicator = load(TYPING_INDICATOR_SCENE)
-	
-	print("chat_handler: NPC bubble loaded: ", _npc_bubble != null)
-	print("chat_handler: Player bubble loaded: ", _player_bubble != null)
-	print("chat_handler: Typing indicator loaded: ", _typing_indicator != null)
-	
+
 	_debug_log("Bubbles loaded: NPC=%s Player=%s" % [_npc_bubble != null, _player_bubble != null])
 	
 	_setup_contacts()
@@ -56,7 +51,6 @@ func _debug_log(msg: String) -> void:
 	# For web debugging - set placeholder text temporarily
 	if _input:
 		_input.placeholder_text = msg
-		print("[DEBUG] ", msg)
 
 func _setup_notifications() -> void:
 	var root := get_tree().current_scene
@@ -113,8 +107,7 @@ func _on_contact_selected(chat_path: String, card: Node) -> void:
 			c.set_selected(c == card)
 
 func _apply_to_ui() -> void:
-	print("chat_handler: Loading conversation from: ", chat_json_path)
-	
+
 	var engine := get_node_or_null("/root/DialogueEngine")
 	if engine:
 		var file := FileAccess.open(chat_json_path, FileAccess.READ)
@@ -122,7 +115,6 @@ func _apply_to_ui() -> void:
 			var data: Variant = JSON.parse_string(file.get_as_text())
 			file.close()
 			if typeof(data) == TYPE_DICTIONARY:
-				print("chat_handler: Loading conversation into engine")
 				engine.load_conversation(chat_json_path, data, false)
 			else:
 				push_error("chat_handler: Failed to parse JSON from " + chat_json_path)
@@ -132,8 +124,6 @@ func _apply_to_ui() -> void:
 		push_error("chat_handler: DialogueEngine not found!")
 	
 	_profile_icon.texture = profile_texture
-	print("chat_handler: Profile texture set: ", profile_texture != null)
-	print("chat_handler: Chat history length: ", chat_history.size())
 	
 	_rebuild_bubbles()
 	_seed_vocab()
@@ -143,7 +133,6 @@ func _apply_to_ui() -> void:
 	_input.placeholder_text = "iMessage"
 
 func _rebuild_bubbles() -> void:
-	print("chat_handler: Rebuilding bubbles")
 	_debug_log("Rebuilding bubbles...")
 	
 	for c in _messages.get_children():
@@ -153,23 +142,19 @@ func _rebuild_bubbles() -> void:
 	
 	var engine := get_node_or_null("/root/DialogueEngine")
 	var history: Array = engine.get_history(chat_json_path) if engine else []
-	print("chat_handler: Engine history length: ", history.size())
 	
 	if history.is_empty(): 
 		history = chat_history
-		print("chat_handler: Using local chat_history instead, length: ", history.size())
 		_debug_log("History: %d messages" % history.size())
 	
 	for entry in history:
 		var is_player: bool = entry.get("author", "contact") == "player"
 		var text := str(entry.get("text", ""))
-		print("chat_handler: Adding bubble - player:", is_player, " text:", text.substr(0, 50))
 		_add_bubble_to_history(text, is_player)
 	
 	_bottom_sep = _add_spacer("BottomSeparator")
 	_update_bubble_widths()
-	
-	print("chat_handler: Bubbles rebuilt, total message children: ", _messages.get_child_count())
+
 	_debug_log("Built %d bubbles" % history.size())
 
 func _add_spacer(spacer_name: String) -> HSeparator:

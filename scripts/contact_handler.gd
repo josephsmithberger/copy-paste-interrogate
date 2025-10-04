@@ -42,7 +42,6 @@ func _populate_contact_list() -> void:
 			var user_files := DirAccess.get_files_at(USER_CHATS_DIR)
 			if not user_files.is_empty():
 				chat_dir = USER_CHATS_DIR
-				print("contact_handler: Using imported dialogues from user:// directory")
 	
 	var files := DirAccess.get_files_at(chat_dir)
 	if files.is_empty():
@@ -66,8 +65,6 @@ func _populate_contact_list() -> void:
 		# Set exported json path on the card's script
 		card.chat_json_path = json_path
 
-		print("contact_handler: Adding card for", json_path)
-
 		add_child(card)
 		move_child(card, insert_after.get_index() + 1)
 
@@ -80,8 +77,6 @@ func _populate_contact_list() -> void:
 
 	if added == 0:
 		push_warning("contact_handler: No JSON chats found in %s" % chat_dir)
-	else:
-		print("contact_handler: Added %d chat(s) from %s" % [added, chat_dir])
 
 	# Apply any existing search text (e.g., if user typed early or restored state)
 	_filter_contacts()

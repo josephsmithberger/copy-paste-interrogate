@@ -11,7 +11,6 @@ var _is_changing := false
 
 func change_scene(scene_key: String) -> void:
 	if _is_changing:
-		print("SceneManager: Already changing scene, ignoring request")
 		return
 	
 	if not scene_key in SCENES:
@@ -19,7 +18,6 @@ func change_scene(scene_key: String) -> void:
 		return
 	
 	var scene_path: String = SCENES[scene_key]
-	print("SceneManager: Changing to scene: " + scene_path)
 	
 	_is_changing = true
 	
@@ -36,17 +34,13 @@ func change_scene(scene_key: String) -> void:
 		push_error("SceneManager: Failed to change scene. Error code: " + str(error))
 		_is_changing = false
 	else:
-		print("SceneManager: Scene change successful")
 		# Reset flag after a frame to allow the new scene to load
 		await get_tree().process_frame
 		_is_changing = false
 
 func change_scene_to_path(scene_path: String) -> void:
 	if _is_changing:
-		print("SceneManager: Already changing scene, ignoring request")
 		return
-	
-	print("SceneManager: Changing to scene path: " + scene_path)
 	
 	_is_changing = true
 	
@@ -63,7 +57,6 @@ func change_scene_to_path(scene_path: String) -> void:
 		push_error("SceneManager: Failed to change scene. Error code: " + str(error))
 		_is_changing = false
 	else:
-		print("SceneManager: Scene change successful")
 		# Reset flag after a frame
 		await get_tree().process_frame
 		_is_changing = false

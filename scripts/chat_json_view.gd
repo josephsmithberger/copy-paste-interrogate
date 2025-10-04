@@ -17,8 +17,6 @@ func _ready() -> void:
 	load_chat_from_json()
 
 func load_chat_from_json() -> void:
-	print("ChatJsonView: Loading from path: ", chat_json_path)
-	
 	if chat_json_path.is_empty():
 		var msg := "No chat JSON path set."
 		push_warning("ChatJsonView: %s" % msg)
@@ -34,8 +32,6 @@ func load_chat_from_json() -> void:
 	var text := file.get_as_text()
 	file.close()
 	
-	print("ChatJsonView: File loaded, length: ", text.length())
-
 	var root: Variant = JSON.parse_string(text)
 	if typeof(root) != TYPE_DICTIONARY:
 		var err2 := "Root of JSON must be an object/dictionary."
@@ -68,8 +64,6 @@ func load_chat_from_json() -> void:
 			if typeof(entry) == TYPE_STRING:
 				push_warning("ChatJsonView: Ignoring NPC line after first step (move into prior step.success)")
 	
-	print("ChatJsonView: Parsed ", chat_history.size(), " pre-step messages")
-
 	# Load texture
 	profile_texture = null
 	if icon_path != "":
