@@ -96,7 +96,7 @@ grow_vertical = 0
 [node name="Label" type="Label" parent="HBoxContainer"]
 custom_minimum_size = Vector2(510, 0)
 layout_mode = 2
-text = "  V0.51"
+text = "  V0.52"
 
 [node name="LinkButton" type="LinkButton" parent="HBoxContainer"]
 layout_mode = 2

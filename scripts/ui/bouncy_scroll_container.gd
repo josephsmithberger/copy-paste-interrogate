@@ -116,15 +116,9 @@ func _gui_input(event: InputEvent) -> void:
 				accept_event()
 	elif event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
-		# Don't consume the touch if it's on a clickable child control
-		var local_pos := touch.position
-		for child in get_children():
-			if child is Control:
-				var child_control := child as Control
-				if child_control.get_rect().has_point(local_pos):
-					# Let child controls handle the touch
-					if _has_clickable_at_position(child_control, local_pos):
-						return
+		var global_pos := touch.position
+		if _content and _is_interactive_control_at_point(_content, global_pos):
+			return
 		if touch.pressed:
 			_start_drag(touch.position)
 		else:
@@ -402,37 +396,34 @@ func _soft_limit(value: float, limit: float) -> float:
 	var softened := cap + (excess / (1.0 + excess * 1.4))
 	return signf(value) * minf(softened, limit)
 
-func _has_clickable_at_position(control: Control, pos: Vector2) -> bool:
-	# Recursively check if there's a truly interactive control at the given position
-	# (buttons, text inputs, etc.) but NOT static containers or labels
+func _is_interactive_control_at_point(control: Control, global_point: Vector2) -> bool:
 	if not control.visible or control.mouse_filter == Control.MOUSE_FILTER_IGNORE:
 		return false
-	
-	# Check if this is an actual interactive control that should consume touch events
-	var is_interactive := (
-		control is Button or 
-		control is LineEdit or 
-		control is TextEdit or 
-		control is Slider or 
-		control is SpinBox or
-		control is CheckBox or
-		control is OptionButton or
-		(control.mouse_filter == Control.MOUSE_FILTER_STOP and control.is_in_group("contact_cards"))
-	)
-	
-	if is_interactive:
-		# Check if position is within this control's bounds
-		var local_pos := control.get_local_mouse_position()
-		if Rect2(Vector2.ZERO, control.size).has_point(local_pos):
-			return true
-	
-	# Check children recursively
+
+	var local_point: Vector2 = control.get_global_transform().affine_inverse() * global_point
+	if not Rect2(Vector2.ZERO, control.size).has_point(local_point):
+		return false
+
+	if _is_control_interactive(control):
+		return true
+
 	for child in control.get_children():
-		if child is Control:
-			var child_control := child as Control
-			var child_rect := Rect2(child_control.position, child_control.size)
-			if child_rect.has_point(pos - control.position):
-				if _has_clickable_at_position(child_control, pos - control.position):
-					return true
-	
+		if child is Control and _is_interactive_control_at_point(child as Control, global_point):
+			return true
+
+	return false
+
+func _is_control_interactive(control: Control) -> bool:
+	if control is BaseButton:
+		return true
+	if control is LineEdit or control is TextEdit:
+		return true
+	if control is SpinBox or control is OptionButton:
+		return true
+	if control is ScrollBar or control is Slider:
+		return true
+	if control.focus_mode != Control.FOCUS_NONE:
+		return true
+	if control.mouse_filter == Control.MOUSE_FILTER_STOP and control.is_in_group("contact_cards"):
+		return true
 	return false
