@@ -46,6 +46,7 @@ layout_mode = 2
 [node name="Start_game" type="MarginContainer" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
+mouse_filter = 0
 
 [node name="bubble2" type="NinePatchRect" parent="CenterContainer/VBoxContainer/Start_game"]
 layout_mode = 2
@@ -67,6 +68,7 @@ text = "Start Game"
 [node name="Dialogue_creator" type="MarginContainer" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
+mouse_filter = 0
 
 [node name="bubble" type="NinePatchRect" parent="CenterContainer/VBoxContainer/Dialogue_creator"]
 layout_mode = 2
@@ -97,7 +99,7 @@ grow_vertical = 0
 [node name="Label" type="Label" parent="HBoxContainer"]
 custom_minimum_size = Vector2(510, 0)
 layout_mode = 2
-text = "  V0.9"
+text = "  V1.1"
 
 [node name="LinkButton" type="LinkButton" parent="HBoxContainer"]
 layout_mode = 2

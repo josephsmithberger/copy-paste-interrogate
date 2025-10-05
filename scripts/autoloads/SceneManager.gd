@@ -28,16 +28,29 @@ func change_scene(scene_key: String) -> void:
 		_is_changing = false
 		return
 	
-	# Change scene
-	var error := get_tree().change_scene_to_file(scene_path)
+	# Use threaded loading for better performance
+	ResourceLoader.load_threaded_request(scene_path)
 	
-	if error != OK:
-		push_error("SceneManager: Failed to change scene. Error code: " + str(error))
-		_is_changing = false
-	else:
-		# Reset flag after a frame to allow the new scene to load
+	# Wait for loading to complete
+	while true:
+		var status = ResourceLoader.load_threaded_get_status(scene_path)
+		
+		if status == ResourceLoader.THREAD_LOAD_LOADED:
+			var packed_scene = ResourceLoader.load_threaded_get(scene_path)
+			var error := get_tree().change_scene_to_packed(packed_scene)
+			
+			if error != OK:
+				push_error("SceneManager: Failed to change scene. Error code: " + str(error))
+			
+			_is_changing = false
+			break
+		elif status == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE or status == ResourceLoader.THREAD_LOAD_FAILED:
+			push_error("SceneManager: Failed to load scene: " + scene_path)
+			_is_changing = false
+			break
+		
+		# Wait a frame before checking again
 		await get_tree().process_frame
-		_is_changing = false
 
 func change_scene_to_path(scene_path: String) -> void:
 	if _is_changing:

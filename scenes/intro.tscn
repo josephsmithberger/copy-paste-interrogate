@@ -1,6 +1,5 @@
-[gd_scene load_steps=3 format=3 uid="uid://dhi725kj3os3p"]
+[gd_scene load_steps=2 format=3 uid="uid://dhi725kj3os3p"]
 
-[ext_resource type="VideoStream" uid="uid://dxmcwml24nxkd" path="res://assets/getCroppedImage.ogv" id="1_ioskq"]
 [ext_resource type="Script" uid="uid://cbu5t5v185r3y" path="res://scripts/intro.gd" id="2_intro"]
 
 [node name="intro" type="Control"]
@@ -19,6 +18,5 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-stream = ExtResource("1_ioskq")
 autoplay = true
 expand = true
