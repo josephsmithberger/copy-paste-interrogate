@@ -1,23 +1,49 @@
 {
   "name": "Lucy (work)",
-  "icon": "res://assets/profile_icons/placeholder.png",
+  "icon": "res://assets/profile_icons/_0001_lucy.png",
   "locked": true,
   "chat": [
 	{
-	  "match": "set",
-	  "expect_tokens": [
-		"not",
-        "ok"
+	  "any_of": [
+		{
+		  "match": "set",
+		  "expect_tokens": ["not", "ok"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["something", "wrong"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["problem"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["help"]
+		}
 	  ],
 	  "success": "Is our connection broken?? What's wrong?",
 	  "fail": "huh",
 	  "lock": false
 	},
 	{
-	  "match": "set",
-	  "expect_tokens": [
-		"phone",
-        "broken"
+	  "any_of": [
+		{
+		  "match": "set",
+		  "expect_tokens": ["phone", "broken"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["iPad", "broken"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["device", "broken"]
+		},
+		{
+		  "match": "contains",
+		  "expect_tokens": ["broken"]
+		}
 	  ],
 	  "success": "Oh your iPad? Yikes, sorry about that. Want me to fill out a IT ticket for you?",
 	  "fail": "??",
@@ -87,9 +113,23 @@
 	  ]
 	},
 	{
-	  "match": "set",
-	  "expect_tokens": [
-        "hack"
+	  "any_of": [
+		{
+		  "match": "set",
+		  "expect_tokens": ["hack"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["hacked"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["hacker"]
+		},
+		{
+		  "match": "contains",
+		  "expect_tokens": ["security"]
+		}
 	  ],
 	  "success": "Oh damn, it was hacked?! All of our plans are on there.",
 	  "fail": "?",
@@ -105,9 +145,23 @@
 	  ]
 	},
 	{
-	  "match": "set",
-	  "expect_tokens": [
-        "event"
+	  "any_of": [
+		{
+		  "match": "set",
+		  "expect_tokens": ["event"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["keynote"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["reveal"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["tomorrow"]
+		}
 	  ],
 	  "success": [
 		"Yes - the event is tomorrow! Any updates? ",

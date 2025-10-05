@@ -1,45 +1,65 @@
 {
   "name": "Manager",
-  "icon": "res://assets/profile_icons/placeholder.png",
+  "icon": "res://assets/profile_icons/_0003_manager.png",
   "locked": false,
   "chat": [
-    {
-      "match": "set",
-      "expect": "it does",
-      "success": [
-        "No.. I won't believe it 'till you tell me the project name. ",
+	{
+	  "any_of": [
+		{
+		  "match": "set",
+		  "expect": "it does"
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["yes"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["unfortunately"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["afraid", "so"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["plans"]
+		}
+	  ],
+	  "success": [
+		"No.. I won't believe it 'till you tell me the project name. ",
         "This could be the hacker texting for all I know!"
-      ],
-      "fail": "does it or does it not?",
-      "lock": false,
-      "notify": [
-        {
-          "chat": "res://scripts/chats/hacker.json",
-          "messages": [
-            "L!quid G1ass - want me to spell it out for you?",
-            "I won't - MWAHAHAHA",
-            "You must find it yourself. ",
+	  ],
+	  "fail": "does it or does it not?",
+	  "lock": false,
+	  "notify": [
+		{
+		  "chat": "res://scripts/chats/Hacker.json",
+		  "messages": [
+			"L!quid G1ass - want me to spell it out for you?",
+			"I won't - MWAHAHAHA",
+			"You must find it yourself. ",
             "You have one of them, spell it out."
-          ]
-        }
-      ]
-    },
-    {
-      "match": "set",
-      "expect": "liquid glass",
-      "success": [
-        "Oh no..",
-        "Andrea- there's nothing we can do.",
+		  ]
+		}
+	  ]
+	},
+	{
+	  "match": "set",
+	  "expect": "liquid glass",
+	  "success": [
+		"Oh no..",
+		"Andrea- there's nothing we can do.",
         "Tim will be very mad.."
-      ],
-      "fail": "That's not it.",
-      "lock": false,
-      "notify": [
-        {
-          "chat": "res://scripts/chats/hacker.json",
-          "messages": "Whelp that was a good show.. I decided I'm going to leak it anyway. Thanks for playing my game."
-        }
-      ]
-    }
+	  ],
+	  "fail": "That's not it.",
+	  "lock": false,
+	  "notify": [
+		{
+		  "chat": "res://scripts/chats/Hacker.json",
+		  "messages": "Whelp that was a good show.. I decided I'm going to leak it anyway. Thanks for playing my game."
+		}
+	  ]
+	}
   ]
 }

@@ -1,29 +1,47 @@
 {
   "name": "David (dog walker)",
-  "icon": "res://assets/profile_icons/placeholder.png",
+  "icon": "res://assets/profile_icons/_0000_david.png",
   "locked": true,
   "chat": [
-    {
-      "match": "set",
-      "expect_tokens": [
-        "available"
-      ],
-      "success": [
-        "Ok so I might've found what caused Winnie's coughing..",
-        "She might've ate some of the glass near my apartment",
+	{
+	  "any_of": [
+		{
+		  "match": "set",
+		  "expect_tokens": ["available"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["chat"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["talk"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["here"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["ready"]
+		}
+	  ],
+	  "success": [
+		"Ok so I might've found what caused Winnie's coughing..",
+		"She might've ate some of the glass near my apartment",
         "And that might've gotten stuck in her throat."
-      ],
-      "fail": "hm?",
-      "lock": false,
-      "notify": [
-        {
-          "chat": "res://scripts/chats/manager.json",
-          "messages": [
-            "Andrea.. Your iPad got hacked? ",
+	  ],
+	  "fail": "hm?",
+	  "lock": false,
+	  "notify": [
+		{
+		  "chat": "res://scripts/chats/manager.json",
+		  "messages": [
+			"Andrea.. Your iPad got hacked? ",
             "Tell me it doesn't have the design plans we're unveiling tomorrow."
-          ]
-        }
-      ]
-    }
+		  ]
+		}
+	  ]
+	}
   ]
 }

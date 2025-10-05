@@ -9,7 +9,7 @@ content_margin_left = 10.0
 content_margin_top = 10.0
 content_margin_right = 10.0
 content_margin_bottom = 5.0
-bg_color = Color(0.6, 0.6, 0.6, 0.5647059)
+bg_color = Color(0.6, 0.6, 0.6, 0.7764706)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -19,6 +19,7 @@ corner_radius_top_left = 25
 corner_radius_top_right = 25
 corner_radius_bottom_right = 25
 corner_radius_bottom_left = 25
+expand_margin_left = 10.0
 
 [sub_resource type="Animation" id="Animation_yejxv"]
 length = 0.001
@@ -72,7 +73,7 @@ tracks/0/keys = {
 "times": PackedFloat32Array(0, 0.5),
 "transitions": PackedFloat32Array(0.5, 1),
 "update": 0,
-"values": [Vector2(439, -72), Vector2(439, 0)]
+"values": [Vector2(439, -72), Vector2(439, 10)]
 }
 tracks/1/type = "value"
 tracks/1/imported = false
@@ -112,7 +113,7 @@ tracks/0/keys = {
 "times": PackedFloat32Array(0, 0.4),
 "transitions": PackedFloat32Array(1, 0.5),
 "update": 0,
-"values": [Vector2(439, 0), Vector2(439, -72)]
+"values": [Vector2(439, 10), Vector2(439, -72)]
 }
 tracks/1/type = "value"
 tracks/1/imported = false
@@ -151,7 +152,7 @@ anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -137.0
 offset_top = -37.26
-offset_right = 248.0
+offset_right = 348.0
 offset_bottom = 27.740002
 grow_horizontal = 2
 scale = Vector2(0.5, 0.5)
@@ -175,7 +176,7 @@ layout_mode = 2
 text = "Name"
 
 [node name="Message_preview" type="Label" parent="PanelContainer/HBoxContainer/VBoxContainer"]
-custom_minimum_size = Vector2(300, 0)
+custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
 text = "This is the preview."
 autowrap_mode = 3

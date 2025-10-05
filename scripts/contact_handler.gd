@@ -53,6 +53,13 @@ func _populate_contact_list() -> void:
 
 	var insert_after: Node = _anchor
 	var added := 0
+	var file_count := 0
+	
+	# Count valid JSON files first
+	for f in files:
+		if not f.begins_with(".") and f.get_extension().to_lower() == "json":
+			file_count += 1
+	
 	for f in files:
 		if f.begins_with("."):
 			continue
@@ -68,12 +75,16 @@ func _populate_contact_list() -> void:
 		add_child(card)
 		move_child(card, insert_after.get_index() + 1)
 
-		# Add a separator between entries
-		var sep := HSeparator.new()
-		add_child(sep)
-		move_child(sep, card.get_index() + 1)
-		insert_after = sep
 		added += 1
+		
+		# Add a separator between entries (but not after the last one)
+		if added < file_count:
+			var sep := HSeparator.new()
+			add_child(sep)
+			move_child(sep, card.get_index() + 1)
+			insert_after = sep
+		else:
+			insert_after = card
 
 	if added == 0:
 		push_warning("contact_handler: No JSON chats found in %s" % chat_dir)

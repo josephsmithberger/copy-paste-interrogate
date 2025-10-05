@@ -1,6 +1,6 @@
 {
   "name": "IT",
-  "icon": "res://assets/profile_icons/placeholder.png",
+  "icon": "res://assets/profile_icons/_0002_image.png",
   "locked": true,
   "chat": [
 	{
@@ -30,9 +30,19 @@
 	  "lock": false
 	},
 	{
-	  "match": "set",
-	  "expect_tokens": [
-        "iPad"
+	  "any_of": [
+		{
+		  "match": "set",
+		  "expect_tokens": ["iPad"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["tablet"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["device"]
+		}
 	  ],
 	  "success": [
 		"Recognized device type: Yes",
@@ -48,9 +58,23 @@
 	  ]
 	},
 	{
-	  "match": "set",
-	  "expect_tokens": [
-        "hacked"
+	  "any_of": [
+		{
+		  "match": "set",
+		  "expect_tokens": ["hacked"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["security", "breach"]
+		},
+		{
+		  "match": "set",
+		  "expect_tokens": ["compromised"]
+		},
+		{
+		  "match": "contains",
+		  "expect_tokens": ["hack"]
+		}
 	  ],
 	  "success": "Immediate actions will be taken. Confirm with your digital signature.",
 	  "fail": "Unrecognized input",
@@ -68,11 +92,14 @@
 	  "notify": [
 		{
 		  "chat": "res://scripts/chats/Hacker.json",
-		  "messages": "Oh shit - they got your manager involved!"
+		  "messages": [
+			"Oh shit",
+			"They got your manager involved!"
+		  ]
 		},
 		{
 		  "chat": "res://scripts/chats/dog_walker.json",
-		  "messages": "I just checked - they're not poisonous. But I made a discovery. Let me know if you can chat."
+		  "messages": "I just checked - they're not poisonous. But I made a discovery. Let me know if you're available to chat."
 		}
 	  ]
 	}

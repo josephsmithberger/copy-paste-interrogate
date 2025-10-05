@@ -24,6 +24,7 @@ var _error_popup: Popup
 var _tutorial_shown: bool = false
 var _typing_row: HBoxContainer = null
 var _current_card: Node
+var _chat_session_id: int = 0  # Increments each time we load a new contact
 
 @onready var _profile_icon: TextureRect = $VBoxContainer/Profile_icon
 @onready var _scroll: ScrollContainer = $ScrollContainer
@@ -88,6 +89,9 @@ func _get_contact_list() -> Node:
 func _on_contact_selected(chat_path: String, card: Node) -> void:
 	if chat_path == chat_json_path and _loaded_once and card == _current_card:
 		return
+	
+	# Increment session ID to invalidate any pending notifications for previous chat
+	_chat_session_id += 1
 	
 	reload_with_path(chat_path)
 	current_contact_path = chat_path
@@ -256,8 +260,8 @@ func _on_message_text_submitted(new_text: String) -> void:
 	# Get response lines (if any)
 	var lines: Array = res.get("npc_messages", [])
 	if lines.size() > 0:
+		# Note: _append_npc_with_delay now handles contact preview updates internally
 		await _append_npc_with_delay(lines)
-		_update_contact_preview(chat_json_path, str(lines.back()))
 	
 	_scroll_smooth(scroll_ease_duration)
 
@@ -271,16 +275,30 @@ func _append_npc_bubble(text: String) -> void:
 	_append_bubble(text, false)
 
 func _append_npc_with_delay(lines: Array) -> void:
-	for l in lines:
-		var msg := str(l)
+	# Capture the session ID at the start to detect if user switches chats
+	var session_at_start := _chat_session_id
+	var contact_at_start := current_contact_path
+	
+	for i in range(lines.size()):
+		var msg := str(lines[i])
 		var delay := minf(randf_range(0.2, 0.6) + msg.length() * randf_range(0.015, 0.03), 2.5)
 		
 		_show_typing()
 		await get_tree().create_timer(delay).timeout
-		_hide_typing()
 		
+		# Check if user switched chats during the delay
+		if _chat_session_id != session_at_start or current_contact_path != contact_at_start:
+			_hide_typing()
+			# User switched away - show notification for the aborted messages
+			_show_aborted_message_notification(contact_at_start, lines, i)
+			return  # Abort - user switched to a different chat
+		
+		_hide_typing()
 		_append_npc_bubble(msg)
 		_scroll_smooth(scroll_ease_duration)
+		
+		# Update contact card preview after each message (in case user switches mid-sequence)
+		_update_contact_preview(contact_at_start, msg)
 
 func _append_bubble(text: String, is_player: bool) -> void:
 	var scene := _player_bubble if is_player else _npc_bubble
@@ -328,25 +346,60 @@ func _update_contact_preview(contact_path: String, last_text: String) -> void:
 				child.refresh_last_message(last_text)
 			break
 
+func _show_aborted_message_notification(contact_path: String, all_lines: Array, aborted_at_index: int) -> void:
+	# Show notification for the messages that weren't displayed because user switched chats
+	if not _notif_widget or not _notif_widget.has_method("notification_in"):
+		return
+	
+	# Get the first un-displayed message as preview
+	var preview := ""
+	if aborted_at_index < all_lines.size():
+		preview = str(all_lines[aborted_at_index])
+	
+	if preview.is_empty():
+		return
+	
+	var cname := _get_contact_name(contact_path)
+	var msg := preview.substr(0, 61) + "..." if preview.length() > 64 else preview
+	var icon := _get_contact_icon(contact_path)
+	_notif_widget.call("notification_in", icon, cname, msg, contact_path)
+	_dim_icon()
+
 func _on_contact_incoming(contact_path: String, lines: PackedStringArray, _source: String) -> void:
 	var preview := str(lines[lines.size() - 1]) if lines.size() > 0 else ""
 	_update_contact_preview(contact_path, preview)
 	
+	# Capture current session ID to detect if user switches chats during delayed append
+	var session_when_received := _chat_session_id
+	
 	if contact_path == current_contact_path and _loaded_once:
-		for line in lines:
-			_append_npc_bubble(str(line))
-		_scroll_smooth(scroll_ease_duration)
+		# Wait a frame to ensure UI is ready, then check if session is still valid
+		await get_tree().process_frame
 		
-		var engine := get_node_or_null("/root/DialogueEngine")
-		if engine: engine.clear_unread(contact_path)
-		
-		if _current_card:
-			if _current_card.has_method("clear_notifications"):
-				_current_card.clear_notifications()
-			elif _current_card.has_method("clear_notifcations"):
-				_current_card.clear_notifcations()
-		
-		_dismiss_notification(contact_path)
+		# Only append if we're still viewing the same chat session
+		if _chat_session_id == session_when_received and contact_path == current_contact_path:
+			for line in lines:
+				_append_npc_bubble(str(line))
+			_scroll_smooth(scroll_ease_duration)
+			
+			var engine := get_node_or_null("/root/DialogueEngine")
+			if engine: engine.clear_unread(contact_path)
+			
+			if _current_card:
+				if _current_card.has_method("clear_notifications"):
+					_current_card.clear_notifications()
+				elif _current_card.has_method("clear_notifcations"):
+					_current_card.clear_notifcations()
+			
+			_dismiss_notification(contact_path)
+		else:
+			# Session changed, treat as notification instead
+			if _notif_widget and _notif_widget.has_method("notification_in"):
+				var cname := _get_contact_name(contact_path)
+				var msg := preview.substr(0, 61) + "..." if preview.length() > 64 else preview
+				var icon := _get_contact_icon(contact_path)
+				_notif_widget.call("notification_in", icon, cname, msg, contact_path)
+				_dim_icon()
 		return
 	
 	if _notif_widget and _notif_widget.has_method("notification_in"):
