@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=3 uid="uid://csetq7krkvpro"]
+[gd_scene load_steps=8 format=3 uid="uid://csetq7krkvpro"]
 
 [ext_resource type="Script" uid="uid://d0b3es1hr6uvm" path="res://scripts/title_screen.gd" id="1_dc4i4"]
 [ext_resource type="Texture2D" uid="uid://bayf68ou81f2j" path="res://assets/ui/user_message_bubble.png" id="2_mgrm8"]
 [ext_resource type="FontFile" uid="uid://boaluht6layu6" path="res://assets/ui/liquid_glass/Inter-VariableFont_opsz,wght.ttf" id="3_dc4i4"]
 [ext_resource type="Texture2D" uid="uid://chcme5ko1j18" path="res://assets/ui/npc_message_bubble.png" id="4_e54dn"]
+[ext_resource type="AudioStream" uid="uid://b1yopne78dhsl" path="res://assets/ui/audio/iphone-apple-store-sound.mp3" id="5_dc4i4"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_3yumr"]
 content_margin_left = 30.0
@@ -103,6 +104,9 @@ layout_mode = 2
 text = "Visit my Portfolio"
 underline = 1
 uri = "https://josephsmithberger.com"
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("5_dc4i4")
 
 [connection signal="gui_input" from="CenterContainer/VBoxContainer/Start_game" to="." method="_on_start_game_gui_input"]
 [connection signal="gui_input" from="CenterContainer/VBoxContainer/Dialogue_creator" to="." method="_on_dialogue_creator_gui_input"]

@@ -42,12 +42,14 @@ func _on_dialogue_creator_gui_input(event: InputEvent) -> void:
 			_trigger_dialogue_creator()
 
 func _trigger_start_game() -> void:
+	$AudioStreamPlayer.play()
 	_is_transitioning = true
 	_play_bounce_animation(_start_game)
 	await get_tree().create_timer(0.3).timeout
 	SceneManager.change_scene("main")
 
 func _trigger_dialogue_creator() -> void:
+	$AudioStreamPlayer.play()
 	_is_transitioning = true
 	_play_bounce_animation(_dialogue_creator)
 	await get_tree().create_timer(0.3).timeout
