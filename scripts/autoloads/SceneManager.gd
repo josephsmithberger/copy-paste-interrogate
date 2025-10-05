@@ -3,6 +3,7 @@ extends Node
 # Scene paths - preload these for web builds
 const SCENES := {
 	"title": "res://scenes/title_screen.tscn",
+	"intro": "res://scenes/intro.tscn",
 	"main": "res://scenes/main_window.tscn",
 	"import": "res://scenes/dialogue_import.tscn"
 }

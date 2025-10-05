@@ -46,7 +46,7 @@ func _trigger_start_game() -> void:
 	_is_transitioning = true
 	_play_bounce_animation(_start_game)
 	await get_tree().create_timer(0.3).timeout
-	SceneManager.change_scene("main")
+	SceneManager.change_scene("intro")
 
 func _trigger_dialogue_creator() -> void:
 	$AudioStreamPlayer.play()
