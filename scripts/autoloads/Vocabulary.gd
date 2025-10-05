@@ -40,11 +40,44 @@ func add_words(words: Array) -> void:
 		for t in toks:
 			if t == "":
 				continue
+			if _is_obfuscated(t):
+				continue
 			if not _words.has(t):
 				_words[t] = true
 				newly.append(t)
 	if newly.size() > 0:
 		words_unlocked.emit(newly)
+
+func _is_obfuscated(token: String) -> bool:
+	# Filter out l33t-speak and obfuscated tokens
+	# Check for mixed letters and numbers (common in l33t-speak)
+	var has_letter := false
+	var has_number := false
+	
+	for i in range(token.length()):
+		var c := token[i]
+		if c >= '0' and c <= '9':
+			has_number = true
+		elif (c >= 'a' and c <= 'z') or (c >= 'A' and c <= 'Z'):
+			has_letter = true
+	
+	# If it has both letters and numbers mixed together, it's likely obfuscated
+	if has_letter and has_number:
+		return true
+	
+	# Check for l33t-speak patterns: words with 0, 1, 3, 4 as substitutes
+	# But allow pure numbers (like "8921" employee ID)
+	if has_number and not has_letter:
+		return false
+	
+	# Check for random special characters in the middle of words
+	if token.contains("%") or (token.contains("-") and token.length() > 2):
+		# Allow hyphenated words like "un-obstructed" only if no numbers
+		if token.contains("-") and not has_number:
+			return false
+		return true
+	
+	return false
 
 func contains(word: String) -> bool:
 	return _words.has(word.to_lower())
