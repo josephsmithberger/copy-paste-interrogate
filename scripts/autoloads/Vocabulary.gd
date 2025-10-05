@@ -89,6 +89,67 @@ func all_words() -> PackedStringArray:
 	arr.sort()
 	return arr
 
+func highlight_new_words(text: String) -> String:
+	# Wraps new (not yet seen) words in BBCode highlighting
+	# Returns the text with [b][color=#007AFF]word[/color][/b] around new tokens
+	var tokens := tokenize(text)
+	var new_tokens := []
+	
+	# First pass: identify which tokens are new
+	for token in tokens:
+		if _is_obfuscated(token):
+			continue
+		if not _words.has(token):
+			new_tokens.append(token)
+	
+	if new_tokens.is_empty():
+		return text
+	
+	# Second pass: build highlighted version by finding word boundaries
+	var result := ""
+	var i := 0
+	var lower_text := text.to_lower()
+	
+	while i < text.length():
+		var current_char := text[i]
+		var matched := false
+		
+		# Check if any new token starts at this position
+		for token in new_tokens:
+			var token_len: int = token.length()
+			if i + token_len > text.length():
+				continue
+			
+			# Check if this position matches the token (case-insensitive)
+			var substr := lower_text.substr(i, token_len)
+			if substr != token:
+				continue
+			
+			# Verify word boundaries (not part of a larger word)
+			var prev_is_boundary: bool = i == 0 or not _is_word_char(text[i - 1])
+			var next_is_boundary: bool = (i + token_len >= text.length()) or not _is_word_char(text[i + token_len])
+			
+			if prev_is_boundary and next_is_boundary:
+				# Found a match - wrap it
+				var original_word := text.substr(i, token_len)
+				result += "[color=#007AFF]" + original_word + "[/color]"
+				i += token_len
+				matched = true
+				break
+		
+		if not matched:
+			result += current_char
+			i += 1
+	
+	return result
+
+func _is_word_char(c: String) -> bool:
+	if c.length() != 1:
+		return false
+	var code := c.unicode_at(0)
+	# Check if alphanumeric or apostrophe
+	return (code >= 48 and code <= 57) or (code >= 65 and code <= 90) or (code >= 97 and code <= 122) or c == "'"
+
 
 # Called when the node enters the scene tree for the first time.
 func clear_all() -> void:

@@ -200,7 +200,6 @@ theme_override_styles/focus = SubResource("StyleBoxFlat_c4u0h")
 placeholder_text = "iMessage"
 max_length = 50
 keep_editing_on_text_submit = true
-virtual_keyboard_show_on_focus = false
 clear_button_enabled = true
 caret_blink = true
 

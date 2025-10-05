@@ -1,202 +1,261 @@
 {
-  "name": "Lucy (work)",
-  "icon": "res://assets/profile_icons/_0001_lucy.png",
-  "locked": true,
-  "chat": [
-	"Hey, is everything ok? Why have you not been picking up your phone?",
-	"I'm starting to get worried — please let me know if something is wrong or you need help!",
-	{
-	  "any_of": [
+	"name": "Lucy (work)",
+	"icon": "res://assets/profile_icons/_0001_lucy.png",
+	"locked": true,
+	"chat": [
+		"Hey, is everything ok? Why have you not been picking up your phone?",
+		"I'm starting to get worried — please let me know if something is wrong or you need help!",
 		{
-		  "match": "set",
-		  "expect_tokens": ["not", "ok"]
+			"any_of": [
+				{
+					"match": "set",
+					"expect_tokens": [
+						"not",
+						"ok"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"something",
+						"wrong"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"problem"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"help"
+					]
+				}
+			],
+			"success": "Is our connection broken?? What's wrong?",
+			"fail": "huh",
+			"lock": false
 		},
 		{
-		  "match": "set",
-		  "expect_tokens": ["something", "wrong"]
+			"any_of": [
+				{
+					"match": "set",
+					"expect_tokens": [
+						"phone",
+						"broken"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"iPad",
+						"broken"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"device",
+						"broken"
+					]
+				},
+				{
+					"match": "contains",
+					"expect_tokens": [
+						"broken"
+					]
+				}
+			],
+			"success": "Oh your iPad? Yikes, sorry about that. Want me to fill out a IT ticket for you?",
+			"fail": "??",
+			"lock": false
 		},
 		{
-		  "match": "set",
-		  "expect_tokens": ["problem"]
+			"any_of": [
+				{
+					"match": "set",
+					"expect_tokens": [
+						"ok"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"yes"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"sure"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"please"
+					]
+				}
+			],
+			"success": "Alright, it's automated so you should get a response any moment.",
+			"fail": "I need confirmation.",
+			"lock": false,
+			"notify": [
+				{
+					"chat": "res://scripts/chats/IT.json",
+					"messages": "IT ticket automation. Lucy (Employee #: 8921) has started a ticket for you. Would you like to proceed?"
+				}
+			]
 		},
 		{
-		  "match": "set",
-		  "expect_tokens": ["help"]
+			"any_of": [
+				{
+					"match": "set",
+					"expect_tokens": [
+						"yes"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"ok"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"sure"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"yeah"
+					]
+				}
+			],
+			"success": [
+				"Great! Sorry I called you so many times, that must've been annoying. Hopefully we can get this cleared up before the reveal tomorrow.. ",
+				"By the way what's wrong with your iPad? Are you not able to type or something?"
+			],
+			"lock": false,
+			"notify": [
+				{
+					"chat": "res://scripts/chats/dog_walker.json",
+					"messages": [
+						"Hey Andrea, sorry Winnie wasn't up to the walk yesterday. Is she feeling any better today? I've never heard a dog hack and cough like that. ",
+						"I gave her an apple yesterday, those aren't poisonous to dogs.. right?"
+					]
+				}
+			]
+		},
+		{
+			"any_of": [
+				{
+					"match": "set",
+					"expect_tokens": [
+						"hack"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"hacked"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"hacker"
+					]
+				},
+				{
+					"match": "contains",
+					"expect_tokens": [
+						"security"
+					]
+				}
+			],
+			"success": "Oh damn, it was hacked?! All of our plans are on there.",
+			"fail": "?",
+			"lock": false,
+			"notify": [
+				{
+					"chat": "res://scripts/chats/Hacker.json",
+					"messages": [
+						"You've already unlocked the word for your last name.. I'll give you a riddle: His name is Tim Cook but many call him Tim .... ",
+						"That is your last name."
+					]
+				}
+			]
+		},
+		{
+			"any_of": [
+				{
+					"match": "set",
+					"expect_tokens": [
+						"event"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"keynote"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"reveal"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"tomorrow"
+					]
+				}
+			],
+			"success": [
+				"Yes - the event is tomorrow! Any updates? ",
+				"You seem limited in your texting, can you at least tell me if your IT ticket got a response?"
+			],
+			"lock": false
+		},
+		{
+			"any_of": [
+				{
+					"match": "set",
+					"expect_tokens": [
+						"yes"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"yeah"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"ok"
+					]
+				}
+			],
+			"success": [
+				"They did?! Great- hopefully this get's ironed out.",
+				"The world is not ready for the fluidity of our design."
+			],
+			"lock": false,
+			"notify": [
+				{
+					"chat": "res://scripts/chats/dog_walker.json",
+					"messages": "Can you try pouring some liquid down her throat? This is freaking me out and I feel liable"
+				}
+			]
 		}
-	  ],
-	  "success": "Is our connection broken?? What's wrong?",
-	  "fail": "huh",
-	  "lock": false
-	},
-	{
-	  "any_of": [
-		{
-		  "match": "set",
-		  "expect_tokens": ["phone", "broken"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["iPad", "broken"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["device", "broken"]
-		},
-		{
-		  "match": "contains",
-		  "expect_tokens": ["broken"]
-		}
-	  ],
-	  "success": "Oh your iPad? Yikes, sorry about that. Want me to fill out a IT ticket for you?",
-	  "fail": "??",
-	  "lock": false
-	},
-	{
-	  "any_of": [
-		{
-		  "match": "set",
-		  "expect_tokens": ["ok"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["yes"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["sure"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["please"]
-		}
-	  ],
-	  "success": "Alright, it's automated so you should get a response any moment.",
-	  "fail": "I need confirmation.",
-	  "lock": false,
-	  "notify": [
-		{
-		  "chat": "res://scripts/chats/IT.json",
-		  "messages": "IT ticket automation. Lucy (Employee #: 8921) has started a ticket for you. Would you like to proceed?"
-		}
-	  ]
-	},
-	{
-	  "any_of": [
-		{
-		  "match": "set",
-		  "expect_tokens": ["yes"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["ok"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["sure"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["yeah"]
-		}
-	  ],
-	  "success": [
-		"Great! Sorry I called you so many times, that must've been annoying. Hopefully we can get this cleared up before the reveal tomorrow.. ",
-        "By the way what's wrong with your iPad? Are you not able to type or something?"
-	  ],
-	  "lock": false,
-	  "notify": [
-		{
-		  "chat": "res://scripts/chats/dog_walker.json",
-		  "messages": [
-			"Hey Andrea, sorry Winnie wasn't up to the walk yesterday. Is she feeling any better today? I've never heard a dog hack and cough like that. ",
-            "I gave her an apple yesterday, those aren't poisonous to dogs.. right?"
-		  ]
-		}
-	  ]
-	},
-	{
-	  "any_of": [
-		{
-		  "match": "set",
-		  "expect_tokens": ["hack"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["hacked"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["hacker"]
-		},
-		{
-		  "match": "contains",
-		  "expect_tokens": ["security"]
-		}
-	  ],
-	  "success": "Oh damn, it was hacked?! All of our plans are on there.",
-	  "fail": "?",
-	  "lock": false,
-	  "notify": [
-		{
-		  "chat": "res://scripts/chats/Hacker.json",
-		  "messages": [
-			"You've already unlocked the word for your last name.. I'll give you a riddle: His name is Tim Cook but many call him Tim .... ",
-            "That is your last name."
-		  ]
-		}
-	  ]
-	},
-	{
-	  "any_of": [
-		{
-		  "match": "set",
-		  "expect_tokens": ["event"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["keynote"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["reveal"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["tomorrow"]
-		}
-	  ],
-	  "success": [
-		"Yes - the event is tomorrow! Any updates? ",
-        "You seem limited in your texting, can you at least tell me if your IT ticket got a response?"
-	  ],
-	  "lock": false
-	},
-	{
-	  "any_of": [
-		{
-		  "match": "set",
-		  "expect_tokens": ["yes"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["yeah"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["ok"]
-		}
-	  ],
-	  "success": [
-		"They did?! Great- hopefully this get's ironed out.",
-        "The world is not ready for the fluidity of our design."
-	  ],
-	  "lock": false,
-	  "notify": [
-		{
-		  "chat": "res://scripts/chats/dog_walker.json",
-		  "messages": "Can you try pouring some liquid down her throat? This is freaking me out and I feel liable"
-		}
-	  ]
-	}
-  ]
+	]
 }

@@ -1,78 +1,94 @@
 {
-  "name": "Hacker",
-  "icon": "res://assets/profile_icons/_0004_hacker.png",
-  "locked": false,
-  "chat": [
-	"Hello.",
-	{
-	  "any_of": [
+	"name": "Hacker",
+	"icon": "res://assets/profile_icons/_0004_hacker.png",
+	"locked": false,
+	"chat": [
+		"Hello.",
 		{
-		  "match": "set",
-		  "expect_tokens": ["hello"]
+			"any_of": [
+				{
+					"match": "set",
+					"expect_tokens": [
+						"hello"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"hi"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"hey"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"greetings"
+					]
+				}
+			],
+			"success": [
+				"1've h4cked y0ur Ip4d 4nd g0t y0ur \"L1quid Gl4ss\" pl4ns. Alert y0ur c0w0rkers bef0re 1 le4k 1t.",
+				"Y0u c4n 0nly use w0rds fr0m 0thers. F1nd th3 un-0bstructed w0rds 1n mY te%ts 4nd respond w1th th3m."
+			],
+			"lock": false
 		},
 		{
-		  "match": "set",
-		  "expect_tokens": ["hi"]
+			"match": "contains",
+			"expect_tokens": [
+				"respond",
+				"alert"
+			],
+			"success": "y0u d1d 1t. d0n't get t0o c0nf1dent, th0ugh. y0ur j0b 4nd reput4t10n 4re 0n the l1ne.",
+			"fail": "y0u m1ght've m1ssed s0me..",
+			"lock": false,
+			"notify": [
+				{
+					"chat": "res://scripts/chats/Lucy.json",
+					"messages": "Please answer, the Keynote is tomorrow!"
+				}
+			]
 		},
 		{
-		  "match": "set",
-		  "expect_tokens": ["hey"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["greetings"]
+			"any_of": [
+				{
+					"match": "set",
+					"expect_tokens": [
+						"liquid"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"glass"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"project"
+					]
+				},
+				{
+					"match": "set",
+					"expect_tokens": [
+						"plans"
+					]
+				}
+			],
+			"success": [
+				"Yup - there it is. now the translucent bit.",
+				"Think of the ramifications of me leaking this!",
+				"Heck- android might be able to cobble a copy together",
+				"You're so close yet so far..",
+				"Try mentioning the \"event\" to someone..."
+			],
+			"fail": "Try again",
+			"lock": false
 		}
-	  ],
-	  "success": [
-		"1've h4cked y0ur Ip4d 4nd g0t y0ur \"L1quid Gl4ss\" pl4ns. Alert y0ur c0w0rkers bef0re 1 le4k 1t.",
-		"Y0u c4n 0nly use w0rds fr0m 0thers. F1nd th3 un-0bstructed w0rds 1n mY te%ts 4nd respond w1th th3m."
-	  ],
-	  "lock": false
-	},
-	{
-	  "match": "contains",
-	  "expect_tokens": [
-		"respond",
-        "alert"
-	  ],
-	  "success": "y0u d1d 1t. d0n't get t0o c0nf1dent, th0ugh. y0ur j0b 4nd reput4t10n 4re 0n the l1ne.",
-	  "fail": "y0u m1ght've m1ssed s0me..",
-	  "lock": false,
-	  "notify": [
-		{
-		  "chat": "res://scripts/chats/Lucy.json",
-		  "messages": "Please answer, the Keynote is tomorrow!"
-		}
-	  ]
-	},
-	{
-	  "any_of": [
-		{
-		  "match": "set",
-		  "expect_tokens": ["liquid"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["glass"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["project"]
-		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["plans"]
-		}
-	  ],
-	  "success": [
-		"Yup - there it is. now the translucent bit.",
-		"Think of the ramifications of me leaking this!",
-		"Heck- android might be able to cobble a copy together",
-		"You're so close yet so far..",
-        "Try mentioning the \"event\" to someone..."
-	  ],
-	  "fail": "Try again",
-	  "lock": false
-	}
-  ]
+	]
 }

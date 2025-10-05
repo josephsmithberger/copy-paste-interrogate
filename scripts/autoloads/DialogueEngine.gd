@@ -22,6 +22,7 @@ func load_conversation(contact_id: String, data: Dictionary, force: bool = false
 	var steps: Array = []
 	var preseed: Array = []
 	var starts_locked := bool(data.get("locked", false))
+	var vocab := get_node_or_null("/root/Vocabulary")
 	if data.has("chat") and typeof(data.chat) == TYPE_ARRAY:
 		var encountered_step := false
 		for entry in data.chat:
@@ -30,7 +31,13 @@ func load_conversation(contact_id: String, data: Dictionary, force: bool = false
 				steps.append(_normalize_step(entry))
 				encountered_step = true
 			elif t == TYPE_STRING and not encountered_step:
-				preseed.append({"author": "contact", "text": str(entry)})
+				var text := str(entry)
+				var display_text := text
+				if vocab and vocab.has_method("highlight_new_words"):
+					display_text = vocab.highlight_new_words(text)
+				preseed.append({"author": "contact", "text": display_text})
+				if vocab:
+					vocab.add_words([text])
 	_conversations[contact_id] = {"steps": steps, "index": 0, "locked": starts_locked}
 	_history[contact_id] = preseed
 	_chat_sources[contact_id] = data
@@ -99,22 +106,20 @@ func process_input(contact_id: String, player_text: String) -> Dictionary:
 		var fail_lines := _to_lines(step.get("fail", []))
 		if fail_lines.is_empty():
 			return _make_result(STATUS_WRONG, [], [], [], idx)
-		if vocab and ADD_FAIL_LINE_TOKENS:
-			for l in fail_lines:
-				vocab.add_words([l])
 		for fl in fail_lines:
-			_append_history(contact_id, "contact", fl)
+			_append_history_with_highlight(contact_id, "contact", fl, vocab)
+			if vocab and ADD_FAIL_LINE_TOKENS:
+				vocab.add_words([fl])
 		return _make_result(STATUS_WRONG, [], fail_lines, [], idx)
 
 	if vocab:
 		vocab.add_words([player_text])
 	_append_history(contact_id, "player", player_text)
 	var success_lines := _to_lines(step.get("success", []))
-	if vocab:
-		for sl in success_lines:
-			vocab.add_words([sl])
 	for sl in success_lines:
-		_append_history(contact_id, "contact", sl)
+		_append_history_with_highlight(contact_id, "contact", sl, vocab)
+		if vocab:
+			vocab.add_words([sl])
 	convo.index = idx + 1
 	# Check if this step locks the conversation after success
 	if step.has("lock") and bool(step.lock):
@@ -127,6 +132,18 @@ func process_input(contact_id: String, player_text: String) -> Dictionary:
 func _append_history(contact_id: String, author: String, text: String) -> void:
 	var arr: Array = _history.get(contact_id, [])
 	arr.append({"author": author, "text": text})
+	_history[contact_id] = arr
+
+func _append_history_with_highlight(contact_id: String, author: String, text: String, vocab: Node) -> void:
+	var arr: Array = _history.get(contact_id, [])
+	var display_text := text
+	
+	# Highlight new words for NPC messages BEFORE adding to vocabulary
+	if author == "contact":
+		if vocab and vocab.has_method("highlight_new_words"):
+			display_text = vocab.highlight_new_words(text)
+	
+	arr.append({"author": author, "text": display_text})
 	_history[contact_id] = arr
 
 func _unknown_tokens(tokens: PackedStringArray, vocab: Node) -> PackedStringArray:
@@ -181,7 +198,7 @@ func _delayed_notification(target: String, lines: PackedStringArray, source: Str
 	# Now append to history and add vocabulary after the delay
 	var vocab := get_node_or_null("/root/Vocabulary")
 	for line in lines:
-		_append_history(target, "contact", line)
+		_append_history_with_highlight(target, "contact", line, vocab)
 		if vocab:
 			vocab.add_words([line])
 	_mark_unread(target, lines.size())

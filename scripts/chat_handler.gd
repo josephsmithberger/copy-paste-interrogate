@@ -130,7 +130,7 @@ func _apply_to_ui() -> void:
 	_profile_icon.texture = profile_texture
 	
 	_rebuild_bubbles()
-	_seed_vocab()
+	# NOTE: _seed_vocab() removed - DialogueEngine.load_conversation() already handles vocabulary
 	_defer_scroll_instant()
 	_loaded_once = true
 	_input.editable = true
@@ -258,10 +258,22 @@ func _on_message_text_submitted(new_text: String) -> void:
 	_input.clear()
 	
 	# Get response lines (if any)
-	var lines: Array = res.get("npc_messages", [])
-	if lines.size() > 0:
-		# Note: _append_npc_with_delay now handles contact preview updates internally
-		await _append_npc_with_delay(lines)
+	var raw_lines: Array = res.get("npc_messages", [])
+	if raw_lines.size() > 0:
+		# Get the highlighted versions from history (last N contact messages)
+		var history: Array = engine.get_history(chat_json_path)
+		var highlighted_lines: Array = []
+		var contact_messages := 0
+		for i in range(history.size() - 1, -1, -1):
+			if history[i].get("author", "") == "contact":
+				highlighted_lines.insert(0, str(history[i].get("text", "")))
+				contact_messages += 1
+				if contact_messages >= raw_lines.size():
+					break
+		
+		# Use highlighted versions if available, otherwise fall back to raw
+		var lines_to_display := highlighted_lines if highlighted_lines.size() == raw_lines.size() else raw_lines
+		await _append_npc_with_delay(lines_to_display)
 	
 	_scroll_smooth(scroll_ease_duration)
 
