@@ -63,7 +63,7 @@ func _apply_to_ui() -> void:
 		var last_label := get_node(last_path) as Label
 		if last_label:
 			var last_text := get_last_message_text()
-			last_label.text = last_text
+			last_label.text = _strip_bbcode(last_text)
 
 func refresh_last_message(text_override: String = "") -> void:
 	# Update only the last message label; used by chat handler when new messages arrive
@@ -72,9 +72,18 @@ func refresh_last_message(text_override: String = "") -> void:
 		var last_label := get_node(last_path) as Label
 		if last_label:
 			if text_override != "":
-				last_label.text = text_override
+				last_label.text = _strip_bbcode(text_override)
 			else:
-				last_label.text = get_last_message_text()
+				last_label.text = _strip_bbcode(get_last_message_text())
+
+func _strip_bbcode(text: String) -> String:
+	# Remove BBCode tags for display in plain Label (contact card preview)
+	var regex := RegEx.new()
+	var err := regex.compile("\\[/?[^\\]]+\\]")
+	if err != OK:
+		push_warning("contact_card: Failed to compile BBCode strip regex")
+		return text
+	return regex.sub(text, "", true)
 
 func _gui_input(event):
 	if event is InputEventMouseButton:

@@ -14,7 +14,7 @@ func notification_in(profile_path: String, contact_name: String, message_preview
 	if tex is Texture2D:
 		$PanelContainer/HBoxContainer/TextureRect.texture = tex
 	$PanelContainer/HBoxContainer/VBoxContainer/Name.text = contact_name
-	$PanelContainer/HBoxContainer/VBoxContainer/Message_preview.text = message_preview
+	$PanelContainer/HBoxContainer/VBoxContainer/Message_preview.text = _strip_bbcode(message_preview)
 	_target_chat_path = chat_path
 	showing = true
 	if timer:
@@ -46,3 +46,12 @@ func _on_timer_timeout() -> void:
 
 func get_target_chat_path() -> String:
 	return _target_chat_path
+
+func _strip_bbcode(text: String) -> String:
+	# Remove BBCode tags for display in plain Label (notification preview)
+	var regex := RegEx.new()
+	var err := regex.compile("\\[/?[^\\]]+\\]")
+	if err != OK:
+		push_warning("notification: Failed to compile BBCode strip regex")
+		return text
+	return regex.sub(text, "", true)

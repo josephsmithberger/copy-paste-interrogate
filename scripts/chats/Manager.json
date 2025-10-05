@@ -1,7 +1,7 @@
 {
   "name": "Manager",
   "icon": "res://assets/profile_icons/_0003_manager.png",
-  "locked": false,
+  "locked": true,
   "chat": [
 	{
 	  "any_of": [

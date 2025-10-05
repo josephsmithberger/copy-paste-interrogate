@@ -61,6 +61,50 @@ func is_locked(contact_id: String) -> bool:
 		return bool(convo.get("locked", false))
 	return false
 
+func get_current_step_hints(contact_id: String) -> PackedStringArray:
+	# Returns example phrases that would satisfy the current step
+	var convo: Variant = _conversations.get(contact_id, null)
+	if convo == null or typeof(convo) != TYPE_DICTIONARY:
+		return PackedStringArray()
+	
+	var steps: Array = convo.get("steps", [])
+	var idx: int = int(convo.get("index", 0))
+	
+	if idx >= steps.size():
+		return PackedStringArray()
+	
+	var step: Dictionary = steps[idx]
+	return _extract_hints_from_step(step)
+
+func _extract_hints_from_step(step: Dictionary) -> PackedStringArray:
+	var hints: PackedStringArray = []
+	
+	# Handle any_of - show multiple alternatives
+	if step.has("any_of") and typeof(step.any_of) == TYPE_ARRAY:
+		for alt in step.any_of:
+			if typeof(alt) == TYPE_DICTIONARY:
+				var alt_hints := _extract_hints_from_step(_normalize_step(alt))
+				for h in alt_hints:
+					if hints.size() < 3 and not hints.has(h):  # Max 3 hints
+						hints.append(h)
+		return hints
+	
+	# Handle exact expect
+	if step.has("expect"):
+		hints.append(str(step.expect))
+		return hints
+	
+	# Handle expect_tokens
+	if step.has("expect_tokens") and typeof(step.expect_tokens) == TYPE_ARRAY:
+		var tokens: Array = step.expect_tokens
+		
+		# Format tokens into a readable phrase
+		var phrase := " ".join(tokens)
+		hints.append(phrase)
+		return hints
+	
+	return hints
+
 func clear_unread(contact_id: String) -> void:
 	if not _unread_counts.has(contact_id):
 		return
@@ -201,7 +245,7 @@ func _delayed_notification(target: String, lines: PackedStringArray, source: Str
 		_append_history_with_highlight(target, "contact", line, vocab)
 		if vocab:
 			vocab.add_words([line])
-	_mark_unread(target, lines.size())
+	mark_unread(target, lines.size())
 	emit_signal("contact_incoming", target, lines, source)
 
 func _ensure_conversation_loaded(contact_id: String) -> void:
@@ -229,7 +273,7 @@ func _load_chat_dict(contact_id: String) -> Dictionary:
 	_chat_sources[contact_id] = parsed_dict
 	return parsed_dict
 
-func _mark_unread(contact_id: String, amount: int) -> void:
+func mark_unread(contact_id: String, amount: int) -> void:
 	var current := int(_unread_counts.get(contact_id, 0))
 	current += max(amount, 0)
 	_unread_counts[contact_id] = current

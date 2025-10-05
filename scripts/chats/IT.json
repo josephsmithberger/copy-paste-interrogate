@@ -39,10 +39,6 @@
 		  "match": "set",
 		  "expect_tokens": ["tablet"]
 		},
-		{
-		  "match": "set",
-		  "expect_tokens": ["device"]
-		}
 	  ],
 	  "success": [
 		"Recognized device type: Yes",
@@ -71,10 +67,6 @@
 		  "match": "set",
 		  "expect_tokens": ["compromised"]
 		},
-		{
-		  "match": "contains",
-		  "expect_tokens": ["hack"]
-		}
 	  ],
 	  "success": "Immediate actions will be taken. Confirm with your digital signature.",
 	  "fail": "Unrecognized input",

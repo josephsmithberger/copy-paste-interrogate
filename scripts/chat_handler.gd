@@ -134,7 +134,7 @@ func _apply_to_ui() -> void:
 	_defer_scroll_instant()
 	_loaded_once = true
 	_input.editable = true
-	_input.placeholder_text = "iMessage"
+	_update_placeholder_hint()
 
 func _rebuild_bubbles() -> void:
 	_debug_log("Rebuilding bubbles...")
@@ -244,6 +244,7 @@ func _on_message_text_submitted(new_text: String) -> void:
 	if status == "locked":
 		_append_player_bubble(text)
 		_input.clear()
+		_update_placeholder_hint()
 		_scroll_smooth(scroll_ease_duration)
 		return
 	
@@ -274,6 +275,9 @@ func _on_message_text_submitted(new_text: String) -> void:
 		# Use highlighted versions if available, otherwise fall back to raw
 		var lines_to_display := highlighted_lines if highlighted_lines.size() == raw_lines.size() else raw_lines
 		await _append_npc_with_delay(lines_to_display)
+	
+	# Update placeholder hint for next step
+	_update_placeholder_hint()
 	
 	_scroll_smooth(scroll_ease_duration)
 
@@ -371,8 +375,16 @@ func _show_aborted_message_notification(contact_path: String, all_lines: Array, 
 	if preview.is_empty():
 		return
 	
+	# Mark unread and update contact card badge
+	var engine := get_node_or_null("/root/DialogueEngine")
+	if engine and engine.has_method("mark_unread"):
+		# Count how many messages were aborted
+		var aborted_count := all_lines.size() - aborted_at_index
+		engine.mark_unread(contact_path, aborted_count)
+	
 	var cname := _get_contact_name(contact_path)
-	var msg := preview.substr(0, 61) + "..." if preview.length() > 64 else preview
+	var clean_preview := _strip_bbcode(preview)
+	var msg := clean_preview.substr(0, 61) + "..." if clean_preview.length() > 64 else clean_preview
 	var icon := _get_contact_icon(contact_path)
 	_notif_widget.call("notification_in", icon, cname, msg, contact_path)
 	_dim_icon()
@@ -404,11 +416,15 @@ func _on_contact_incoming(contact_path: String, lines: PackedStringArray, _sourc
 					_current_card.clear_notifcations()
 			
 			_dismiss_notification(contact_path)
+			
+			# Update placeholder hint in case contact was just unlocked
+			_update_placeholder_hint()
 		else:
 			# Session changed, treat as notification instead
 			if _notif_widget and _notif_widget.has_method("notification_in"):
 				var cname := _get_contact_name(contact_path)
-				var msg := preview.substr(0, 61) + "..." if preview.length() > 64 else preview
+				var clean_preview := _strip_bbcode(preview)
+				var msg := clean_preview.substr(0, 61) + "..." if clean_preview.length() > 64 else clean_preview
 				var icon := _get_contact_icon(contact_path)
 				_notif_widget.call("notification_in", icon, cname, msg, contact_path)
 				_dim_icon()
@@ -416,7 +432,8 @@ func _on_contact_incoming(contact_path: String, lines: PackedStringArray, _sourc
 	
 	if _notif_widget and _notif_widget.has_method("notification_in"):
 		var cname := _get_contact_name(contact_path)
-		var msg := preview.substr(0, 61) + "..." if preview.length() > 64 else preview
+		var clean_preview := _strip_bbcode(preview)
+		var msg := clean_preview.substr(0, 61) + "..." if clean_preview.length() > 64 else clean_preview
 		var icon := _get_contact_icon(contact_path)
 		_notif_widget.call("notification_in", icon, cname, msg, contact_path)
 		_dim_icon()
@@ -486,6 +503,43 @@ func _seed_vocab() -> void:
 	for entry in chat_history:
 		if entry.get("author", "contact") == "contact":
 			vocab.add_words([str(entry.get("text", ""))])
+
+func _strip_bbcode(text: String) -> String:
+	# Remove BBCode tags for notification previews
+	var regex := RegEx.new()
+	var err := regex.compile("\\[/?[^\\]]+\\]")
+	if err != OK:
+		return text
+	return regex.sub(text, "", true)
+
+func _update_placeholder_hint() -> void:
+	if not _input:
+		return
+	
+	var engine := get_node_or_null("/root/DialogueEngine")
+	if not engine or chat_json_path.is_empty():
+		_input.placeholder_text = "iMessage"
+		return
+	
+	# Check if contact is locked
+	if engine.is_locked(chat_json_path):
+		_input.placeholder_text = "Locked - waiting for message..."
+		return
+	
+	# Get hints for current step
+	var hints: PackedStringArray = engine.get_current_step_hints(chat_json_path)
+	
+	if hints.is_empty():
+		_input.placeholder_text = "iMessage"
+		return
+	
+	# Format hints nicely
+	if hints.size() == 1:
+		_input.placeholder_text = "Try: \"" + hints[0] + "\""
+	elif hints.size() == 2:
+		_input.placeholder_text = "Try: \"" + hints[0] + "\" or \"" + hints[1] + "\""
+	else:
+		_input.placeholder_text = "Try: \"" + hints[0] + "\", \"" + hints[1] + "\", or \"" + hints[2] + "\""
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
