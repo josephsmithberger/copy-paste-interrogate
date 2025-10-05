@@ -3,6 +3,8 @@
   "icon": "res://assets/profile_icons/_0001_lucy.png",
   "locked": true,
   "chat": [
+	"Hey, is everything ok? Why have you not been picking up your phone?",
+	"I'm starting to get worried — please let me know if something is wrong or you need help!",
 	{
 	  "any_of": [
 		{
